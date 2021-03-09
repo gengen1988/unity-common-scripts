@@ -36,4 +36,10 @@ public static class PathHelper
             segments = segments.Skip(1).ToArray();
         }
     }
+
+    // static string RelativePath()
+    // {
+    //     AssetDatabase.GetAssetPath();
+    //     return default;
+    // }
 }
