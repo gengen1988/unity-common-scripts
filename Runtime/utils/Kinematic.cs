@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 
+
 public static class Kinematic
 {
     // 命中某点的抛物线角度
@@ -56,19 +57,19 @@ public static class Kinematic
     }
 
     // 加速运动的位移
-    public static Vector3 AccelerateDisplacement(Vector3 initialVelocity, Vector3 acceleration, float time)
+    public static Vector3 AccelerateDisplacement(Vector3 velocity, Vector3 acceleration, float time)
     {
-        return initialVelocity * time + acceleration * (.5f * time * time);
+        return velocity * time + acceleration * (.5f * time * time);
     }
 
     // 子弹命中匀速移动物体所需时间
-    public static bool InterceptTime(Vector3 los, Vector3 targetVelocity, float shotSpeed, out float timeRequired)
+    public static bool InterceptTime(Vector3 los, Vector3 targetVelocity, float maxSpeed, out float timeRequired)
     {
-        var a = targetVelocity.sqrMagnitude - shotSpeed * shotSpeed;
+        var a = targetVelocity.sqrMagnitude - maxSpeed * maxSpeed;
         var b = 2f * Vector3.Dot(targetVelocity, los);
         var c = los.sqrMagnitude;
-        timeRequired = default;
 
+        timeRequired = default;
         if (!MathUtil.Quadratic(a, b, c, out var t)) return false;
 
         if (t[0] > 0)
