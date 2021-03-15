@@ -13,15 +13,15 @@ public static class SteeringUtil
         return Seek(target - position, velocity, maxSpeed);
     }
 
-    public static Vector3 Evade(Vector3 los, Vector3 velocity, float maxSpeed, float evadeDistance)
+    public static Vector3 Flee(Vector3 los, Vector3 velocity, float maxSpeed, float evadeDistance)
     {
         if (los.magnitude > evadeDistance) return Vector3.zero;
         return -Seek(los, velocity, maxSpeed);
     }
 
-    public static Vector3 Evade(Vector3 position, Vector3 velocity, Vector3 target, float maxSpeed, float evadeDistance)
+    public static Vector3 Flee(Vector3 position, Vector3 velocity, Vector3 target, float maxSpeed, float evadeDistance)
     {
-        return Evade(target - position, velocity, maxSpeed, evadeDistance);
+        return Flee(target - position, velocity, maxSpeed, evadeDistance);
     }
 
     public static Vector3 Arrive(Vector3 los, Vector3 velocity, float maxSpeed, float arrivalDistance)
@@ -51,5 +51,16 @@ public static class SteeringUtil
     public static Vector3 Pursuit(Vector3 position, Vector3 velocity, Vector3 evaderPosition, Vector3 evaderVelocity, float maxSpeed)
     {
         return Pursuit(evaderPosition - position, velocity, evaderVelocity, maxSpeed);
+    }
+
+    // TODO change transform to steering entity
+    public static Vector3 Wander(Transform transform, float wanderDistance, float wanderRadius, float wanderJitter, ref Vector3 wanderTarget)
+    {
+        var extends = new Vector3(wanderJitter, wanderJitter);
+        wanderTarget += RandomUtil.Position(Vector3.zero, extends, Quaternion.identity);
+        wanderTarget = wanderTarget.normalized * wanderRadius;
+        var targetLocal = wanderTarget + Vector3.right * wanderDistance;
+        var targetWorld = transform.TransformPoint(targetLocal);
+        return targetWorld - transform.position;
     }
 }

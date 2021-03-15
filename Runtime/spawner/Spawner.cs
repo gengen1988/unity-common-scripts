@@ -8,6 +8,7 @@ public abstract class Spawner : MonoBehaviour
     {
         var root = transform;
         Debug.Log($"spawn: {prefabToSpawn.name}");
-        return Instantiate(prefabToSpawn, root.position, root.rotation);
+        var instance = Instantiate(prefabToSpawn, root.position, root.rotation);
+        return instance;
     }
 }
