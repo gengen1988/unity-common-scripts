@@ -69,24 +69,26 @@ public static class Kinematic
         var b = 2f * Vector3.Dot(targetVelocity, los);
         var c = los.sqrMagnitude;
 
+        // no solution, can't intercept
         timeRequired = default;
-        if (!MathUtil.Quadratic(a, b, c, out var t)) return false;
+        if (MathUtil.Quadratic(a, b, c, out var t0, out var t1) > 0) return false;
 
-        if (t[0] > 0)
+        // determine short way
+        if (t0 > 0)
         {
-            if (t[1] > 0)
+            if (t1 > 0)
             {
-                timeRequired = Mathf.Min(t[0], t[1]);
+                timeRequired = Mathf.Min(t0, t1);
                 return true;
             }
 
-            timeRequired = t[0];
+            timeRequired = t0;
             return true;
         }
+        
+        if (t1 <= 0) return false;
 
-        if (t[1] <= 0) return false;
-
-        timeRequired = t[1];
+        timeRequired = t1;
         return true;
     }
 }

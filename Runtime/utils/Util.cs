@@ -22,4 +22,9 @@ public static class Util
             Object.Destroy(child);
         }
     }
+
+    public static Vector3 LOS(this Transform self, MonoBehaviour target)
+    {
+        return target.transform.position - self.position;
+    }
 }

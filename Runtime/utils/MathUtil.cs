@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using UnityEngine;
 
 
@@ -34,23 +35,71 @@ public static class MathUtil
         return Vector2.SignedAngle(Vector2.right, direction);
     }
 
-    public static Vector2 Rotate(this Vector2 los, Quaternion rotation)
+    public static Vector2 Rotate(this Vector2 los, float degrees)
     {
-        return rotation * Vector2.right * los.magnitude;
+        return AngleToRotation(degrees) * los;
     }
 
-    // 一元二次方程
-    public static bool Quadratic(float a, float b, float c, out float[] result)
+    // solutions for: axx + bx + c = 0
+    public static int Quadratic(float a, float b, float c, out float solution1, out float solution2)
     {
-        result = default;
-        var sqrt = Mathf.Sqrt(b * b - 4 * a * c);
-        if (float.IsNaN(sqrt)) return false;
-        result = new[]
+        solution1 = default;
+        solution2 = default;
+
+        // no solution
+        var amount = b * b - 4 * a * c;
+        if (amount < 0) return 0;
+
+        // one solution
+        if (amount == 0)
         {
-            (-b + sqrt) / (2 * a),
-            (-b - sqrt) / (2 * a)
-        };
-        return true;
+            solution1 = solution2 = -.5f * b / a;
+            return 1;
+        }
+
+        // two solutions
+        var root = Mathf.Sqrt(amount);
+        solution1 = (-b + root) / (2 * a);
+        solution2 = (-b - root) / (2 * a);
+        return 2;
+    }
+
+    public static Vector2 PerpendicularToPoint(Vector2 lineOrigin, Vector2 lineDirection, Vector2 point)
+    {
+        var los = point - lineOrigin;
+        Vector2 projection = Vector3.Project(los, lineDirection);
+        return lineOrigin + projection;
+    }
+
+    public static int CircleRayIntersection(Vector2 circleCenter, float circleRadius, Ray ray, out Vector2 result1, out Vector2 result2)
+    {
+        result1 = result2 = default;
+
+        var perpendicular = PerpendicularToPoint(ray.origin, ray.direction, circleCenter);
+
+        // too far
+        var perpendicularToCircle = perpendicular - circleCenter;
+        var perpendicularLenght = perpendicularToCircle.magnitude;
+        if (perpendicularLenght > circleRadius) return 0;
+
+        // just fit
+        if (Math.Abs(perpendicularLenght - circleRadius) < Mathf.Epsilon)
+        {
+            result1 = result2 = perpendicular;
+            return 1;
+        }
+
+        // two point
+        var alpha = Mathf.Asin(perpendicularLenght / circleRadius);
+        var omegaDegree = 90 - alpha * Mathf.Rad2Deg;
+
+        var direction1 = perpendicularToCircle.Rotate(omegaDegree);
+        var direction2 = perpendicularToCircle.Rotate(-omegaDegree);
+
+        result1 = circleCenter + direction1.normalized * circleRadius;
+        result2 = circleCenter + direction2.normalized * circleRadius;
+
+        return 2;
     }
 
     public static int SignWithZero(float number)
