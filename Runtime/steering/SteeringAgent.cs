@@ -22,6 +22,20 @@ namespace Alsorunning.Common.Steering
 
             return steeringForce;
         }
+
+        public static SteeringAgent CreateSeeker(out SteeringEntity self, out SteeringEntity target, float maxSpeed, float seekAmount, float maxSteeringForce)
+        {
+            self = new SteeringEntity();
+            target = new SteeringEntity();
+            return new SteeringAgent
+            {
+                maxSteeringForce = maxSteeringForce,
+                steeringBehaviours = new[]
+                {
+                    Seek.Create(self, target, maxSpeed, seekAmount)
+                }
+            };
+        }
     }
 
     public abstract class SteeringBehaviour
