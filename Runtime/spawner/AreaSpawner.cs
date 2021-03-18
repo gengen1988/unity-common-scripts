@@ -36,6 +36,6 @@ public class AreaSpawner : CountSpawner
     {
         var rotation = transform.rotation;
         var pos = RandomUtil.Position(transform.position, extends, rotation);
-        return Instantiate(prefabToSpawn, pos, rotation);
+        return Spawn(pos, rotation);
     }
 }

@@ -13,5 +13,16 @@ namespace Alsorunning.Common.Steering
         {
             return SteeringUtil.Seek(self.position, self.velocity, target.position, maxSpeed);
         }
+
+        public static SteeringBehaviour Create(SteeringEntity self, SteeringEntity target, float maxSpeed, float amount)
+        {
+            return new Seek
+            {
+                self = self,
+                target = target,
+                maxSpeed = maxSpeed,
+                amount = amount
+            };
+        }
     }
 }

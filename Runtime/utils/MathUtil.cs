@@ -108,4 +108,11 @@ public static class MathUtil
         if (number < 0) return -1;
         return 0;
     }
+
+    public static Vector2 AngleToDirection(float angleDegree)
+    {
+        return new Vector2(Mathf.Cos(angleDegree * Mathf.Deg2Rad), Mathf.Sin(angleDegree * Mathf.Deg2Rad));
+    }
+
+    public static float RotationToAngle(Quaternion rotation) => rotation.eulerAngles.z;
 }

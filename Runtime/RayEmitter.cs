@@ -5,9 +5,11 @@ using UnityEngine;
 public class RayEmitter : MonoBehaviour
 {
     public float length;
+    public LayerMask blockBy;
+
     LineRenderer line;
 
-    [HideInInspector] public Vector3 direction;
+    [HideInInspector] public Vector3 aim;
 
     void OnDrawGizmos()
     {
@@ -24,17 +26,37 @@ public class RayEmitter : MonoBehaviour
         TryGetComponent(out line);
     }
 
-    public void Update()
+    public void FixedUpdate()
     {
         var ray = GetRay();
+        var hit = Physics2D.Raycast(ray.origin, ray.direction, length, blockBy);
         line.SetPosition(0, ray.origin);
-        line.SetPosition(1, ray.GetPoint(length));
+        if (hit)
+        {
+            line.SetPosition(1, hit.point);
+        }
+        else
+        {
+            line.SetPosition(1, ray.GetPoint(length));
+        }
     }
-
+    
     public Ray GetRay()
     {
+        return new Ray(transform.position, transform.right);
+    }
+
+    public Ray GetRay2()
+    {
         var origin = transform.position;
-        var los = direction - origin;
+        var los = aim - origin;
+        
+        if (aim == origin)
+        {
+            Debug.LogWarning("aim is same as origin, cause unsure direction");
+            return new Ray(origin, Vector3.up);
+        }
+
         return new Ray(origin, los);
     }
 }

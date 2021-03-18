@@ -6,6 +6,7 @@ public static class Util
 {
     public static Vector2 MouseWorldPosition() => Camera.main.ScreenToWorldPoint(Input.mousePosition);
     public static GameObject FindPlayer() => GameObject.FindWithTag("Player");
+    public static GameObject FindGameController() => GameObject.FindWithTag("GameController");
 
     public static void RemoveEmpty<T>(List<T> list) where T : Object => list.RemoveAll(item => !item);
 
@@ -27,4 +28,5 @@ public static class Util
     {
         return target.transform.position - self.position;
     }
+
 }
