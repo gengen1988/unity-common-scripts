@@ -12,14 +12,20 @@ public abstract class Spawner : MonoBehaviour
 
     protected GameObject Spawn(Vector3 position, Quaternion rotation)
     {
-        Debug.Log($"spawn: {prefabToSpawn.name}");
-        var instance = Instantiate(prefabToSpawn, position, rotation);
-        foreach (var spawnable in instance.GetComponentsInChildren<ISpawnable>())
+        if (prefabToSpawn)
         {
-            spawnable.OnSpawn(this);
+            Debug.Log($"spawn: {prefabToSpawn.name}");
+            var instance = Instantiate(prefabToSpawn, position, rotation);
+            foreach (var spawnable in instance.GetComponentsInChildren<ISpawnable>())
+            {
+                spawnable.OnSpawn(this);
+            }
+
+            return instance;
         }
 
-        return instance;
+        Debug.LogWarning("no prefab to spawn");
+        return null;
     }
 }
 

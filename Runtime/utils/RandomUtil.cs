@@ -13,4 +13,10 @@ public static class RandomUtil
         var z = Random.Range(-extends.z, extends.z);
         return center + rotation * new Vector3(x, y, z);
     }
+
+    public static Vector2 Direction()
+    {
+        var angle = Random.Range(0, 360);
+        return MathUtil.AngleToDirection(angle);
+    }
 }

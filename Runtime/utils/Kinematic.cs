@@ -4,12 +4,12 @@
 public static class Kinematic
 {
     // 命中某点的抛物线角度
-    public static bool AngleRequiredToHit2D(Vector2 los, float initialSpeed, out float[] angles)
+    public static bool AngleRequiredToHit2D(Vector2 los, float initialSpeed, out float lowAngle, out float highAngle)
     {
-        return AngleRequiredToHit2D(los, initialSpeed, Physics2D.gravity.magnitude, out angles);
+        return AngleRequiredToHit2D(los, initialSpeed, Physics2D.gravity.magnitude, out lowAngle, out highAngle);
     }
 
-    public static bool AngleRequiredToHit2D(Vector2 los, float initialSpeed, float g, out float[] angles)
+    public static bool AngleRequiredToHit2D(Vector2 los, float initialSpeed, float g, out float lowAngle, out float highAngle)
     {
         var x = los.x;
         var y = los.y;
@@ -17,30 +17,37 @@ public static class Kinematic
         var v4 = v2 * v2;
         var x2 = x * x;
         var sqrt = Mathf.Sqrt(v4 - g * (g * x2 + 2 * y * v2));
-        angles = default;
 
         if (float.IsNaN(sqrt))
         {
+            lowAngle = default;
+            highAngle = default;
             return false;
         }
 
-        var results = new[]
-        {
-            Mathf.Atan((v2 - sqrt) / (g * x)) * Mathf.Rad2Deg,
-            Mathf.Atan((v2 + sqrt) / (g * x)) * Mathf.Rad2Deg
-        };
+        var solution1 = Mathf.Atan((v2 - sqrt) / (g * x)) * Mathf.Rad2Deg;
+        var solution2 = Mathf.Atan((v2 + sqrt) / (g * x)) * Mathf.Rad2Deg;
 
         if (x == 0)
         {
-            angles = y > 0 ? new[] {90f, 90f} : new[] {-90f, -90f};
+            if (y > 0)
+            {
+                highAngle = lowAngle = 90f;
+            }
+            else
+            {
+                highAngle = lowAngle = -90f;
+            }
         }
         else if (x > 0)
         {
-            angles = results;
+            lowAngle = solution1;
+            highAngle = solution2;
         }
         else
         {
-            angles = new[] {results[0] + 180f, results[1] + 180f};
+            lowAngle = solution1 + 180f;
+            highAngle = solution2 + 180f;
         }
 
         return true;
@@ -63,15 +70,15 @@ public static class Kinematic
     }
 
     // 子弹命中匀速移动物体所需时间
-    public static bool InterceptTime(Vector3 los, Vector3 targetVelocity, float maxSpeed, out float timeRequired)
+    public static bool InterceptTime(Vector3 los, Vector3 targetVelocity, float interceptSpeed, out float timeRequired)
     {
-        var a = targetVelocity.sqrMagnitude - maxSpeed * maxSpeed;
+        var a = targetVelocity.sqrMagnitude - interceptSpeed * interceptSpeed;
         var b = 2f * Vector3.Dot(targetVelocity, los);
         var c = los.sqrMagnitude;
 
         // no solution, can't intercept
         timeRequired = default;
-        if (MathUtil.Quadratic(a, b, c, out var t0, out var t1) > 0) return false;
+        if (MathUtil.Quadratic(a, b, c, out var t0, out var t1) == 0) return false;
 
         // determine short way
         if (t0 > 0)
@@ -85,7 +92,7 @@ public static class Kinematic
             timeRequired = t0;
             return true;
         }
-        
+
         if (t1 <= 0) return false;
 
         timeRequired = t1;
