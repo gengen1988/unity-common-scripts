@@ -108,6 +108,11 @@ public static class MathUtil
         if (number < 0) return -1;
         return 0;
     }
+    
+    public static Vector3 VectorSubtractClampZero(Vector3 vector, float subtractMagnitude)
+	{
+		return vector.normalized * Mathf.Clamp(vector.magnitude - subtractMagnitude, 0f, float.PositiveInfinity);
+	}
 
     public static Vector2 AngleToDirection(float angleDegree)
     {
