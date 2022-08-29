@@ -1,123 +1,142 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-
 public static class MathUtil
 {
-    public static bool IsNaN(this Vector3 vector)
-    {
-        return float.IsNaN(vector.x) || float.IsNaN(vector.y) || float.IsNaN(vector.z);
-    }
+	public static Vector3 CenterOfMass(IList<Vector3> points)
+	{
+		return points.Aggregate(Vector3.zero, (current, point) => current + point) / points.Count;
+	}
 
-    public static Vector3 CenterOfMass(Vector3[] points)
-    {
-        return points.Aggregate(Vector3.zero, (current, point) => current + point) / points.Length;
-    }
+	public static Vector3 QuaternionToVector(Quaternion rotation)
+	{
+		return rotation * Vector3.right;
+	}
 
-    public static Vector3 RotationToDirection(Quaternion rotation)
-    {
-        return rotation * Vector3.right;
-    }
+	public static float QuaternionToAngle(Quaternion rotation)
+	{
+		return rotation.eulerAngles.z;
+	}
 
-    public static Quaternion AngleToRotation(float angle)
-    {
-        return Quaternion.AngleAxis(angle, Vector3.forward);
-    }
+	public static Vector3 AngleToVector(float degree)
+	{
+		var rad = degree * Mathf.Deg2Rad;
+		return new Vector3(Mathf.Cos(rad), Mathf.Sin(rad));
+	}
 
-    public static Quaternion DirectionToRotation(Vector3 direction)
-    {
-        return Quaternion.FromToRotation(Vector3.right, direction);
-    }
+	public static Quaternion AngleToQuaternion(float degree)
+	{
+		return Quaternion.AngleAxis(degree, Vector3.forward);
+	}
 
-    public static float DirectionToAngle(Vector2 direction)
-    {
-        return Vector2.SignedAngle(Vector2.right, direction);
-    }
+	public static Quaternion VectorToQuaternion(Vector3 direction)
+	{
+		return Quaternion.FromToRotation(Vector3.right, direction);
+	}
 
-    public static Vector2 Rotate(this Vector2 los, float degrees)
-    {
-        return AngleToRotation(degrees) * los;
-    }
+	public static float VectorToAngle(Vector2 direction)
+	{
+		return Vector2.SignedAngle(Vector2.right, direction);
+	}
 
-    // solutions for: axx + bx + c = 0
-    public static int Quadratic(float a, float b, float c, out float solution1, out float solution2)
-    {
-        solution1 = default;
-        solution2 = default;
+	/**
+	 * resolve axx + bx + c = 0
+	 */
+	public static int Quadratic(float a, float b, float c, out float solution1, out float solution2)
+	{
+		var amount = b * b - 4 * a * c;
+		switch (amount)
+		{
+		case < 0:
+			// no solution
+			solution1 = solution2 = float.NaN;
+			return 0;
 
-        // no solution
-        var amount = b * b - 4 * a * c;
-        if (amount < 0) return 0;
+		case 0:
+			// one solution
+			solution1 = solution2 = -.5f * b / a;
+			return 1;
 
-        // one solution
-        if (amount == 0)
-        {
-            solution1 = solution2 = -.5f * b / a;
-            return 1;
-        }
+		default:
+			// two solutions
+			var root = Mathf.Sqrt(amount);
+			solution1 = (-b + root) / (2 * a);
+			solution2 = (-b - root) / (2 * a);
+			return 2;
+		}
+	}
 
-        // two solutions
-        var root = Mathf.Sqrt(amount);
-        solution1 = (-b + root) / (2 * a);
-        solution2 = (-b - root) / (2 * a);
-        return 2;
-    }
+	public static Vector2 PerpendicularToPoint(Vector2 lineOrigin, Vector2 lineDirection, Vector2 point)
+	{
+		var los = point - lineOrigin;
+		Vector2 projection = Vector3.Project(los, lineDirection);
+		return lineOrigin + projection;
+	}
 
-    public static Vector2 PerpendicularToPoint(Vector2 lineOrigin, Vector2 lineDirection, Vector2 point)
-    {
-        var los = point - lineOrigin;
-        Vector2 projection = Vector3.Project(los, lineDirection);
-        return lineOrigin + projection;
-    }
+	public static Vector2 PerpendicularToPoint(Ray2D ray, Vector2 point)
+	{
+		var los = point - ray.origin;
+		Vector2 projection = Vector3.Project(los, ray.direction);
+		return ray.origin + projection;
+	}
 
-    public static int CircleRayIntersection(Vector2 circleCenter, float circleRadius, Ray ray, out Vector2 result1, out Vector2 result2)
-    {
-        result1 = result2 = default;
+	/**
+	 * check circle intersection with ray
+	 */
+	public static int CircleRayIntersection(Vector2 center, float radius, Ray2D ray,
+		out Vector2 point1,
+		out Vector2 point2)
+	{
+		var perpendicular = PerpendicularToPoint(ray, center);
+		var perpendicularToCircle = perpendicular - center;
+		var perpendicularLength = perpendicularToCircle.magnitude;
 
-        var perpendicular = PerpendicularToPoint(ray.origin, ray.direction, circleCenter);
+		// too far
+		if (perpendicularLength > radius)
+		{
+			point1 = point2 = new Vector2(float.NaN, float.NaN);
+			return 0;
+		}
 
-        // too far
-        var perpendicularToCircle = perpendicular - circleCenter;
-        var perpendicularLenght = perpendicularToCircle.magnitude;
-        if (perpendicularLenght > circleRadius) return 0;
+		// just fit
+		if (Math.Abs(perpendicularLength - radius) < Mathf.Epsilon)
+		{
+			point1 = point2 = perpendicular;
+			return 1;
+		}
 
-        // just fit
-        if (Math.Abs(perpendicularLenght - circleRadius) < Mathf.Epsilon)
-        {
-            result1 = result2 = perpendicular;
-            return 1;
-        }
+		// two point
+		var alpha = Mathf.Asin(perpendicularLength / radius);
+		var omegaDegree = 90 - alpha * Mathf.Rad2Deg;
+		var direction1 = Rotate(perpendicularToCircle, omegaDegree);
+		var direction2 = Rotate(perpendicularToCircle, -omegaDegree);
 
-        // two point
-        var alpha = Mathf.Asin(perpendicularLenght / circleRadius);
-        var omegaDegree = 90 - alpha * Mathf.Rad2Deg;
+		point1 = center + direction1.normalized * radius;
+		point2 = center + direction2.normalized * radius;
+		return 2;
+	}
 
-        var direction1 = perpendicularToCircle.Rotate(omegaDegree);
-        var direction2 = perpendicularToCircle.Rotate(-omegaDegree);
+	public static int SignWithZero(float number)
+	{
+		if (number > 0) return 1;
+		if (number < 0) return -1;
+		return 0;
+	}
 
-        result1 = circleCenter + direction1.normalized * circleRadius;
-        result2 = circleCenter + direction2.normalized * circleRadius;
-
-        return 2;
-    }
-
-    public static int SignWithZero(float number)
-    {
-        if (number > 0) return 1;
-        if (number < 0) return -1;
-        return 0;
-    }
-    
-    public static Vector3 VectorSubtractClampZero(Vector3 vector, float subtractMagnitude)
+	public static Vector3 VectorSubtractClampZero(Vector3 vector, float subtractMagnitude)
 	{
 		return vector.normalized * Mathf.Clamp(vector.magnitude - subtractMagnitude, 0f, float.PositiveInfinity);
 	}
 
-    public static Vector2 AngleToDirection(float angleDegree)
-    {
-        return new Vector2(Mathf.Cos(angleDegree * Mathf.Deg2Rad), Mathf.Sin(angleDegree * Mathf.Deg2Rad));
-    }
+	public static Vector2 Rotate(Vector2 los, float degrees)
+	{
+		return AngleToQuaternion(degrees) * los;
+	}
 
-    public static float RotationToAngle(Quaternion rotation) => rotation.eulerAngles.z;
+	public static bool IsNaN(this Vector3 vector)
+	{
+		return float.IsNaN(vector.x) || float.IsNaN(vector.y) || float.IsNaN(vector.z);
+	}
 }
