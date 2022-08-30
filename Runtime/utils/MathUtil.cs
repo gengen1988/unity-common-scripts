@@ -7,7 +7,7 @@ public static class MathUtil
 {
 	public static Vector3 CenterOfMass(IList<Vector3> points)
 	{
-		return points.Aggregate(Vector3.zero, (current, point) => current + point) / points.Count;
+		return points.Aggregate(Vector3.zero, (current, sum) => current + sum) / points.Count;
 	}
 
 	public static Vector3 QuaternionToVector(Quaternion rotation)

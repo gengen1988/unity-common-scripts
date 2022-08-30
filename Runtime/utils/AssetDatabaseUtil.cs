@@ -15,17 +15,39 @@ public static class AssetDatabaseUtil
 		}
 
 		var oldPath = AssetDatabase.GetAssetPath(asset);
-		var filename = Path.GetFileName(oldPath);
-		var newPath = Path.Combine(targetFolder, filename);
+		var fileName = Path.GetFileName(oldPath);
+		var newPath = Path.Combine(targetFolder, fileName);
 		Debug.Log($"move {oldPath} to {newPath}");
 		AssetDatabase.MoveAsset(oldPath, newPath);
 	}
 
 	/**
-	 * create folder recursively
+	 * Create folders recursively
 	 */
-	public static void Mkdirp()
+	public static void Mkdirp(string path)
 	{
-		throw new NotImplementedException();
+		var separators = new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
+		var segments = path.Split(separators, StringSplitOptions.RemoveEmptyEntries);
+		var parent = "";
+
+		foreach (string segment in segments)
+		{
+			if (!AssetDatabase.IsValidFolder(Path.Combine(parent, segment)))
+			{
+				AssetDatabase.CreateFolder(parent, segment);
+			}
+
+			parent = Path.Combine(parent, segment);
+		}
+	}
+
+	/**
+	 * Create a new asset at path. Also create missing folders.
+	 */
+	public static void CreateAsset(Object asset, string path)
+	{
+		var directoryPath = Path.GetDirectoryName(path);
+		Mkdirp(directoryPath);
+		AssetDatabase.CreateAsset(asset, path);
 	}
 }
