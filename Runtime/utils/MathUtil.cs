@@ -131,9 +131,9 @@ public static class MathUtil
 		return vector.normalized * Mathf.Clamp(vector.magnitude - subtractMagnitude, 0f, float.PositiveInfinity);
 	}
 
-	public static Vector2 Rotate(Vector2 los, float degrees)
+	public static Vector2 Rotate(Vector2 vector, float degrees)
 	{
-		return AngleToQuaternion(degrees) * los;
+		return AngleToQuaternion(degrees) * vector;
 	}
 
 	public static bool IsNaN(this Vector3 vector)

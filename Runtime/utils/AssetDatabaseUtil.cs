@@ -14,9 +14,9 @@ public static class AssetDatabaseUtil
 			return;
 		}
 
-		string oldPath = AssetDatabase.GetAssetPath(asset);
-		string filename = Path.GetFileName(oldPath);
-		string newPath = Path.Combine(targetFolder, filename);
+		var oldPath = AssetDatabase.GetAssetPath(asset);
+		var filename = Path.GetFileName(oldPath);
+		var newPath = Path.Combine(targetFolder, filename);
 		Debug.Log($"move {oldPath} to {newPath}");
 		AssetDatabase.MoveAsset(oldPath, newPath);
 	}

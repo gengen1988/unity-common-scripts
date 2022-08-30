@@ -10,7 +10,7 @@ public class RandomSequence<T> where T : class
 
 	public RandomSequence(IEnumerable<T> elements)
 	{
-		List<T> deck = elements.ToList();
+		var deck = elements.ToList();
 		deck.Shuffle();
 		_availableElements = deck;
 		_releasedElements = new List<T>();
@@ -28,11 +28,13 @@ public class RandomSequence<T> where T : class
 			Shuffle();
 		}
 
-		T last = _availableElements.PopLast();
+		var last = _availableElements.PopLast();
 		return last;
 	}
 
-	// 给一个条件，返回满足条件的。
+	/**
+	 * 给一个条件，返回满足条件的。
+	 */
 	public T Acquire(Func<T, bool> condition)
 	{
 		if (_availableElements.Count == 0)
@@ -44,7 +46,7 @@ public class RandomSequence<T> where T : class
 		{
 			if (condition(_availableElements[i]))
 			{
-				T result = _availableElements[i];
+				var result = _availableElements[i];
 				_availableElements.RemoveAt(i);
 				return result;
 			}
@@ -53,7 +55,9 @@ public class RandomSequence<T> where T : class
 		return null;
 	}
 
-	// 卡片放回
+	/**
+	 * 卡片放回
+	 */
 	public void Release(T element)
 	{
 		_releasedElements.Add(element);
@@ -71,7 +75,7 @@ public class RandomSequence<T> where T : class
 		_availableElements.Clear();
 
 		// 2. 取弃牌堆中，不是最后一个的元素中，随机一个。作为第一个元素
-		T firstElement = _releasedElements[Random.Range(0, _releasedElements.Count - 1)];
+		var firstElement = _releasedElements[Random.Range(0, _releasedElements.Count - 1)];
 
 		// 3. 将弃牌堆打乱作为新的牌库，然后将刚刚找出的牌作为第一个
 		_availableElements.AddRange(_releasedElements
