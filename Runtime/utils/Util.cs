@@ -4,9 +4,20 @@ using UnityEngine;
 
 public static class Util
 {
-	public static Vector2 MouseWorldPosition() => Camera.main.ScreenToWorldPoint(Input.mousePosition);
-	public static GameObject FindPlayer() => GameObject.FindWithTag("Player");
-	public static GameObject FindGameController() => GameObject.FindWithTag("GameController");
+	public static GameObject FindPlayer()
+	{
+		return GameObject.FindWithTag("Player");
+	}
+
+	public static GameObject FindGameController()
+	{
+		return GameObject.FindWithTag("GameController");
+	}
+
+	public static Vector2 MouseWorldPosition()
+	{
+		return Camera.main.ScreenToWorldPoint(Input.mousePosition);
+	}
 
 	public static void RemoveEmpty<T>(List<T> list) where T : Object => list.RemoveAll(item => !item);
 
@@ -16,16 +27,45 @@ public static class Util
 		return newArray.ToArray();
 	}
 
-	public static void DestroyChildren(this Transform transform)
+	/**
+	 * 清理 transform 下的子物体
+	 */
+	public static void DestroyChildren(this Transform root, Transform without = null)
 	{
-		foreach (Transform child in transform)
+		if (Application.isPlaying)
 		{
-			Object.Destroy(child);
+			foreach (Transform child in root)
+			{
+				if (child == without)
+				{
+					continue;
+				}
+
+				Object.Destroy(child.gameObject);
+			}
+		}
+		else
+		{
+			// 在编辑阶段里只能用 DestroyImmediate，而且 DestroyImmediate 用 foreach 会导致漏删
+			int skip = 0;
+			while (root.childCount > skip)
+			{
+				Transform target = root.GetChild(skip);
+				if (target == without)
+				{
+					skip++;
+					continue;
+				}
+
+				Object.DestroyImmediate(target.gameObject);
+			}
 		}
 	}
 
-	public static Vector3 Los(this Transform self, MonoBehaviour target)
+	public static T PopLast<T>(this IList<T> list)
 	{
-		return target.transform.position - self.position;
+		T result = list[list.Count - 1];
+		list.RemoveAt(list.Count - 1);
+		return result;
 	}
 }

@@ -47,25 +47,26 @@ public static class MathUtil
 	public static int Quadratic(float a, float b, float c, out float solution1, out float solution2)
 	{
 		var amount = b * b - 4 * a * c;
-		switch (amount)
+
+		// no solution
+		if (amount < 0)
 		{
-		case < 0:
-			// no solution
 			solution1 = solution2 = float.NaN;
 			return 0;
+		}
 
-		case 0:
-			// one solution
+		// one solution
+		if (amount == 0)
+		{
 			solution1 = solution2 = -.5f * b / a;
 			return 1;
-
-		default:
-			// two solutions
-			var root = Mathf.Sqrt(amount);
-			solution1 = (-b + root) / (2 * a);
-			solution2 = (-b - root) / (2 * a);
-			return 2;
 		}
+
+		// two solutions
+		var root = Mathf.Sqrt(amount);
+		solution1 = (-b + root) / (2 * a);
+		solution2 = (-b - root) / (2 * a);
+		return 2;
 	}
 
 	public static Vector2 PerpendicularToPoint(Vector2 lineOrigin, Vector2 lineDirection, Vector2 point)
