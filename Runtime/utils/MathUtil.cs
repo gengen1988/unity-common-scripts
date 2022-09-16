@@ -128,7 +128,7 @@ public static class MathUtil
 
 	public static Vector3 VectorSubtractClampZero(Vector3 vector, float subtractMagnitude)
 	{
-		return vector.normalized * Mathf.Clamp(vector.magnitude - subtractMagnitude, 0f, float.PositiveInfinity);
+		return vector.normalized * Mathf.Max(vector.magnitude - subtractMagnitude, 0f);
 	}
 
 	public static Vector2 Rotate(Vector2 vector, float degrees)
