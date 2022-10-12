@@ -140,4 +140,32 @@ public static class MathUtil
 	{
 		return float.IsNaN(vector.x) || float.IsNaN(vector.y) || float.IsNaN(vector.z);
 	}
+
+	public static float[] GenerateExponentialCurve(float minValue, float maxValue, int levels, float exponentialFactor)
+	{
+		float[] array = new float[levels];
+		float delta = maxValue - minValue;
+		for (int i = 0; i < levels; ++i)
+		{
+			array[i] = Mathf.Pow((float)i / (levels - 1), exponentialFactor) * delta + minValue;
+		}
+
+		return array;
+	}
+
+	public static Vector3[] SliceLine(Vector3 from, Vector3 to, int count)
+	{
+		Vector3[] points = new Vector3[count];
+		Vector3 line = to - from;
+		float deltaX = line.x / (count - 1);
+		float deltaY = line.y / (count - 1);
+		for (int i = 0; i < count; ++i)
+		{
+			float x = from.x + deltaX * i;
+			float y = from.y + deltaY * i;
+			points[i] = new Vector3(x, y);
+		}
+
+		return points;
+	}
 }
