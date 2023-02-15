@@ -84,8 +84,8 @@ public static class Kinematic
 	}
 
 	/**
-     * 子弹命中匀速移动物体所需时间
-     */
+	 * 子弹命中匀速移动物体所需时间
+	 */
 	public static bool InterceptTime(Vector3 los, Vector3 targetVelocity, float interceptSpeed, out float timeRequired)
 	{
 		var a = targetVelocity.sqrMagnitude - interceptSpeed * interceptSpeed;

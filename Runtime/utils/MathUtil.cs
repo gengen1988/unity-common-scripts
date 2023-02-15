@@ -5,6 +5,10 @@ using UnityEngine;
 
 public static class MathUtil
 {
+	public static int Mod(int x, int m) {
+		return (x % m + m) % m;
+	}
+
 	public static Vector3 CenterOfMass(IList<Vector3> points)
 	{
 		return points.Aggregate(Vector3.zero, (current, sum) => current + sum) / points.Count;

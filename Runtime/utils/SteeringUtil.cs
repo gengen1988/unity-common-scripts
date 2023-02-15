@@ -8,20 +8,10 @@ public static class SteeringUtil
 		return desiredVelocity - velocity;
 	}
 
-	public static Vector3 Seek(Vector3 position, Vector3 velocity, Vector3 target, float maxSpeed)
-	{
-		return Seek(target - position, velocity, maxSpeed);
-	}
-
 	public static Vector3 Flee(Vector3 los, Vector3 velocity, float maxSpeed, float evadeDistance)
 	{
 		if (los.magnitude > evadeDistance) return Vector3.zero;
 		return -Seek(los, velocity, maxSpeed);
-	}
-
-	public static Vector3 Flee(Vector3 position, Vector3 velocity, Vector3 target, float maxSpeed, float evadeDistance)
-	{
-		return Flee(target - position, velocity, maxSpeed, evadeDistance);
 	}
 
 	public static Vector3 Arrive(Vector3 los, Vector3 velocity, float maxSpeed, float arrivalDistance)
@@ -33,14 +23,7 @@ public static class SteeringUtil
 		}
 
 		var arrivalRatio = currentDistance / arrivalDistance;
-		var timeToTarget = currentDistance / velocity.magnitude;
-		return Seek(los, velocity, maxSpeed * arrivalRatio) / timeToTarget;
-	}
-
-	public static Vector3 Arrive(Vector3 position, Vector3 velocity, Vector3 target, float maxSpeed,
-		float arrivalDistance)
-	{
-		return Arrive(target - position, velocity, maxSpeed, arrivalDistance);
+		return Seek(los, velocity, maxSpeed * arrivalRatio);
 	}
 
 	public static Vector3 Pursue(Vector3 los, Vector3 velocity, Vector3 evaderVelocity, float maxSpeed)
@@ -50,12 +33,6 @@ public static class SteeringUtil
 		var seekLos = los + evaderVelocity * timeRequired;
 		return Seek(seekLos, velocity, maxSpeed);
 		// TODO 处理迎面撞击，无需预测的情况
-	}
-
-	public static Vector3 Pursue(Vector3 position, Vector3 velocity, Vector3 evaderPosition, Vector3 evaderVelocity,
-		float maxSpeed)
-	{
-		return Pursue(evaderPosition - position, velocity, evaderVelocity, maxSpeed);
 	}
 
 	// TODO change transform to steering entity
