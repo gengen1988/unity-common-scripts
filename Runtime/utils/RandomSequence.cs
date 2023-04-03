@@ -1,89 +1,116 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 using Random = UnityEngine.Random;
 
 public class RandomSequence<T> where T : class
 {
-	private readonly List<T> _availableElements;
-	private readonly List<T> _releasedElements;
+	private readonly List<T> _availableEntries;
+	private readonly List<T> _releasedEntries;
 
 	public RandomSequence(IEnumerable<T> elements)
 	{
-		var deck = elements.ToList();
+		List<T> deck = elements.ToList();
 		deck.Shuffle();
-		_availableElements = deck;
-		_releasedElements = new List<T>();
+		_availableEntries = deck;
+		_releasedEntries = new List<T>();
 	}
 
-	public int Count => _availableElements.Count + _releasedElements.Count;
+	public int Count => _availableEntries.Count + _releasedEntries.Count;
 
 	/**
 	 * 循环随机化抓牌，保证下一张和上一张不一样
 	 */
-	public T Acquire()
+	public T Draw()
 	{
-		if (_availableElements.Count == 0)
+		if (Count == 0)
 		{
+			Debug.LogWarning("总数为 0，不可能抓到");
+			return null;
+		}
+
+		if (_availableEntries.Count == 0)
+		{
+			Debug.Log("抽光了，重新洗牌");
 			Shuffle();
 		}
 
-		var last = _availableElements.PopLast();
+		T last = _availableEntries.PopLast();
 		return last;
 	}
 
 	/**
-	 * 给一个条件，返回满足条件的。
+	 * 给一个条件，返回第一个满足条件的。只在没抓到的牌中找
 	 */
-	public T Acquire(Func<T, bool> condition)
+	public T FindAndTake(Func<T, bool> criteria)
 	{
-		if (_availableElements.Count == 0)
+		if (Count == 0)
 		{
+			Debug.LogWarning("总数为 0，不可能抓到");
+			return null;
+		}
+
+		if (_availableEntries.Count == 0)
+		{
+			Debug.Log("抽光了，重新洗牌");
 			Shuffle();
 		}
 
-		for (int i = _availableElements.Count - 1; i >= 0; i--)
-		{
-			if (condition(_availableElements[i]))
-			{
-				var result = _availableElements[i];
-				_availableElements.RemoveAt(i);
-				return result;
-			}
-		}
-
-		return null;
+		return _availableEntries.FindAndRemove(criteria).FirstOrDefault();
 	}
 
 	/**
-	 * 卡片放回
+	 * 放回卡片
 	 */
-	public void Release(T element)
+	public void Discard(T entry)
 	{
-		_releasedElements.Add(element);
+		_releasedEntries.Add(entry);
 	}
 
-	public bool Contains(T element)
-	{
-		return _availableElements.Contains(element) || _releasedElements.Contains(element);
-	}
-
-	public void Shuffle()
+	private void Shuffle()
 	{
 		// 1. 将剩余的牌放到弃牌堆
-		_releasedElements.AddRange(_availableElements);
-		_availableElements.Clear();
+		_releasedEntries.AddRange(_availableEntries);
+		_availableEntries.Clear();
 
 		// 2. 取弃牌堆中，不是最后一个的元素中，随机一个。作为第一个元素
-		var firstElement = _releasedElements[Random.Range(0, _releasedElements.Count - 1)];
+		T firstElement = _releasedEntries[Random.Range(0, _releasedEntries.Count - 1)];
 
 		// 3. 将弃牌堆打乱作为新的牌库，然后将刚刚找出的牌作为第一个
-		_availableElements.AddRange(_releasedElements
+		_availableEntries.AddRange(_releasedEntries
 			.Where(el => el != firstElement)
 			.OrderBy(_ => Random.value)
 			.Append(firstElement));
 
 		// 4. 清理弃牌堆
-		_releasedElements.Clear();
+		_releasedEntries.Clear();
+	}
+
+	public IEnumerable<T> GetReleasedEntries()
+	{
+		return _releasedEntries;
+	}
+
+	public void MoveToRelease(Func<T, bool> criteria)
+	{
+		IEnumerable<T> toBeMove = _availableEntries.FindAndRemove(criteria);
+		_releasedEntries.AddRange(toBeMove);
+	}
+
+	public void MoveToTop(Func<T, bool> criteria, bool includeReleasedEntries = false, bool shuffle = false)
+	{
+		List<T> toBeMove = _availableEntries.FindAndRemove(criteria).ToList();
+		if (includeReleasedEntries)
+		{
+			toBeMove.AddRange(_releasedEntries.FindAndRemove(criteria));
+		}
+
+		if (shuffle)
+		{
+			toBeMove.Shuffle();
+		}
+
+		_availableEntries.AddRange(toBeMove);
 	}
 }

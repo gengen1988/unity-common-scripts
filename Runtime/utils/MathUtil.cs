@@ -5,7 +5,8 @@ using UnityEngine;
 
 public static class MathUtil
 {
-	public static int Mod(int x, int m) {
+	public static int Mod(int x, int m)
+	{
 		return (x % m + m) % m;
 	}
 
@@ -130,9 +131,9 @@ public static class MathUtil
 		return 0;
 	}
 
-	public static Vector3 VectorSubtractClampZero(Vector3 vector, float subtractMagnitude)
+	public static Vector3 VectorSubtractClampZero(Vector3 vector, float magnitude)
 	{
-		return vector.normalized * Mathf.Max(vector.magnitude - subtractMagnitude, 0f);
+		return vector.normalized * Mathf.Max(vector.magnitude - magnitude, 0f);
 	}
 
 	public static Vector2 Rotate(Vector2 vector, float degrees)
@@ -145,21 +146,17 @@ public static class MathUtil
 		return float.IsNaN(vector.x) || float.IsNaN(vector.y) || float.IsNaN(vector.z);
 	}
 
-	public static float[] GenerateExponentialCurve(float minValue, float maxValue, int levels, float exponentialFactor)
+	public static IEnumerable<float> GenerateExponentialCurve(float min, float max, int levels, float factor = 1)
 	{
-		float[] array = new float[levels];
-		float delta = maxValue - minValue;
+		float delta = max - min;
 		for (int i = 0; i < levels; ++i)
 		{
-			array[i] = Mathf.Pow((float)i / (levels - 1), exponentialFactor) * delta + minValue;
+			yield return Mathf.Pow((float)i / (levels - 1), factor) * delta + min;
 		}
-
-		return array;
 	}
 
-	public static Vector3[] SliceLine(Vector3 from, Vector3 to, int count)
+	public static IEnumerable<Vector3> SliceLine(Vector3 from, Vector3 to, int count)
 	{
-		Vector3[] points = new Vector3[count];
 		Vector3 line = to - from;
 		float deltaX = line.x / (count - 1);
 		float deltaY = line.y / (count - 1);
@@ -167,9 +164,7 @@ public static class MathUtil
 		{
 			float x = from.x + deltaX * i;
 			float y = from.y + deltaY * i;
-			points[i] = new Vector3(x, y);
+			yield return new Vector3(x, y);
 		}
-
-		return points;
 	}
 }

@@ -3,8 +3,6 @@ using UnityEngine;
 
 public static class RandomUtil
 {
-	public static float TriangularOffset(float delta) => (Random.value - Random.value) * delta;
-
 	/**
 	 * 洗牌
 	 */
@@ -22,7 +20,7 @@ public static class RandomUtil
 	/**
 	 * 从列表中随机选中一个
 	 */
-	public static T RandomPick<T>(this IList<T> list)
+	public static T RandomSelect<T>(this IList<T> list)
 	{
 		return list[Random.Range(0, list.Count)];
 	}
@@ -46,41 +44,44 @@ public static class RandomUtil
 		float roll = Random.value;
 		if (roll > successRate)
 		{
-			// Debug.Log($"随机检定失败：掷出 {roll} (成功率 {successRate})");
 			return false;
 		}
 
 		return true;
 	}
 
-	/**
-	 * 有期望值的随机数，三角分布
-	 */
-	public static float RandomValueWithExpect(float from, float to, float expect)
+	public static float TriangularSample(float spread)
 	{
-		float delta = to - from;
-		float distance = expect - from;
-		float ratio = distance / delta;
-		return from + RandomValueWithExpect(ratio) * delta;
+		return (Random.value - Random.value) * spread / 2;
+	}
+
+	/**
+	 * 有期望值的随机采样，三角分布
+	 * 0 to 1
+	 */
+	public static float SampleWithExpect(float expect = .5f)
+	{
+		float value = Random.value;
+		if (value < expect)
+		{
+			return Mathf.Sqrt(expect * value);
+		}
+		else
+		{
+			return 1 - Mathf.Sqrt((expect - 1) * (value - 1));
+		}
 	}
 
 	/**
 	 * 有期望值的随机数，三角分布
+	 * expect 在 from to 之间
 	 */
-	public static float RandomValueWithExpect(float expect)
+	public static float SampleWithExpect(float from, float to, float expect)
 	{
-		float value = Random.value;
-		float result;
-		if (value < expect)
-		{
-			result = Mathf.Sqrt(expect * value);
-		}
-		else
-		{
-			result = 1 - Mathf.Sqrt((expect - 1) * (value - 1));
-		}
-
-		return result;
+		float delta = to - from;
+		float distance = expect - from;
+		float ratio = distance / delta;
+		return from + SampleWithExpect(ratio) * delta;
 	}
 
 	public static Vector3 RandomPosition(Vector3 center, Vector3 extents, Quaternion rotation)

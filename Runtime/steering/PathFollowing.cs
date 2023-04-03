@@ -3,64 +3,65 @@ using UnityEngine;
 
 namespace Alsorunning.Common.Steering
 {
-    public class PathFollowing : SteeringBehaviour
-    {
-        public SteeringEntity self;
-        public Vector3[] path;
+	public class PathFollowing : SteeringBehaviour
+	{
+		public SteeringEntity self;
+		public Vector3[] path;
 
-        // preference
-        public float waypointSeekDistance;
-        public float maxSpeed;
+		// preference
+		public float waypointSeekDistance;
+		public float maxSpeed;
 
-        int currentWaypointIndex;
+		int currentWaypointIndex;
 
-        public override Vector3 Steer()
-        {
-            var currentWaypoint = GetCurrentWaypoint();
-            var distance = Vector3.Distance(self.position, currentWaypoint);
-            if (distance < waypointSeekDistance)
-            {
-                SetNextWaypoint();
-            }
+		public override Vector3 Steer()
+		{
+			var currentWaypoint = GetCurrentWaypoint();
+			var distance = Vector3.Distance(self.position, currentWaypoint);
+			if (distance < waypointSeekDistance)
+			{
+				SetNextWaypoint();
+			}
 
-            if (!Finished())
-            {
-                return SteeringUtil.Seek(self.position, self.velocity, currentWaypoint, maxSpeed);
-            }
-            else
-            {
-                return Vector3.zero;
-            }
-        }
+			if (!Finished())
+			{
+				Vector3 los = currentWaypoint - self.position;
+				return SteeringUtil.Seek(los, self.velocity, maxSpeed);
+			}
+			else
+			{
+				return Vector3.zero;
+			}
+		}
 
-        bool Finished()
-        {
-            if (path == null) return true;
-            
-            return currentWaypointIndex > path.Length;
-        }
+		bool Finished()
+		{
+			if (path == null) return true;
 
-        void SetNextWaypoint()
-        {
-            currentWaypointIndex++;
-        }
+			return currentWaypointIndex > path.Length;
+		}
 
-        Vector3 GetCurrentWaypoint()
-        {
-            if (path == null) return Vector3.zero;
+		void SetNextWaypoint()
+		{
+			currentWaypointIndex++;
+		}
 
-            if (currentWaypointIndex >= path.Length)
-            {
-                return path.Last();
-            }
+		Vector3 GetCurrentWaypoint()
+		{
+			if (path == null) return Vector3.zero;
 
-            return path[currentWaypointIndex];
-        }
+			if (currentWaypointIndex >= path.Length)
+			{
+				return path.Last();
+			}
 
-        public void SetCourse(Vector3[] course)
-        {
-            path = course;
-            currentWaypointIndex = 0;
-        }
-    }
+			return path[currentWaypointIndex];
+		}
+
+		public void SetCourse(Vector3[] course)
+		{
+			path = course;
+			currentWaypointIndex = 0;
+		}
+	}
 }

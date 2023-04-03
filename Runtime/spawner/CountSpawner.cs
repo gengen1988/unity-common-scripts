@@ -5,38 +5,38 @@ using UnityEngine;
 
 public class CountSpawner : Spawner
 {
-    public int maxNumber = 3;
-    public float produceTime = 1f;
+	public int maxNumber = 3;
+	public float produceTime = 1f;
 
-    readonly List<GameObject> spawned = new List<GameObject>();
+	readonly List<GameObject> spawned = new List<GameObject>();
 
-    void Start()
-    {
-        StartCoroutine(SpawnTask());
-    }
+	void Start()
+	{
+		StartCoroutine(SpawnTask());
+	}
 
-    IEnumerator SpawnTask()
-    {
-        while (true)
-        {
-            while (!enabled) yield return null;
+	IEnumerator SpawnTask()
+	{
+		while (true)
+		{
+			while (!enabled) yield return null;
 
-            // count check
-            Util.RemoveEmpty(spawned);
-            if (spawned.Count >= maxNumber)
-            {
-                yield return null;
-                continue;
-            }
+			// count check
+			spawned.RemoveEmpty();
+			if (spawned.Count >= maxNumber)
+			{
+				yield return null;
+				continue;
+			}
 
-            // produce
-            if (produceTime > 0)
-            {
-                yield return new WaitForSeconds(produceTime);
-            }
+			// produce
+			if (produceTime > 0)
+			{
+				yield return new WaitForSeconds(produceTime);
+			}
 
-            var newObj = Spawn();
-            spawned.Add(newObj);
-        }
-    }
+			var newObj = Spawn();
+			spawned.Add(newObj);
+		}
+	}
 }

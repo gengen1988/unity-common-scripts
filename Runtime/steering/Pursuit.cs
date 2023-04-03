@@ -11,7 +11,8 @@ namespace Alsorunning.Common.Steering
 
         public override Vector3 Steer()
         {
-            return SteeringUtil.Pursue(self.position, self.velocity, target.position, target.velocity, maxSpeed);
+            var los = target.position - self.position;
+            return SteeringUtil.Pursue(los, self.velocity, target.velocity, maxSpeed);
         }
     }
 }
