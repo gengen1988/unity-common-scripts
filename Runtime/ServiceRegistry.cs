@@ -4,58 +4,73 @@ using UnityEngine;
 
 public class ServiceRegistry : MonoBehaviour
 {
-    readonly Dictionary<string, object> store = new Dictionary<string, object>();
+	public bool initOnAwake;
 
-    void Awake()
-    {
-        var providers = GetComponentsInChildren<IServiceProvider>();
-        var consumers = GetComponentsInChildren<IServiceConsumer>();
+	readonly Dictionary<string, object> store = new Dictionary<string, object>();
 
-        foreach (var provider in providers)
-        {
-            provider.RegisterService(this);
-        }
+	void Awake()
+	{
+		if (initOnAwake)
+		{
+			Init();
+		}
+	}
 
-        foreach (var consumer in consumers)
-        {
-            consumer.FetchService(this);
-        }
-    }
+	public void Init()
+	{
+		var providers = GetComponentsInChildren<IServiceProvider>();
+		var consumers = GetComponentsInChildren<IServiceConsumer>();
 
-    public void RegisterService(string serviceName, object service)
-    {
-        Debug.Log($"[{name}] register service: \"{serviceName}\" [{service.GetType()}]");
-        store[serviceName] = service;
-    }
+		foreach (var provider in providers)
+		{
+			provider.OnRegisterService(this);
+		}
 
-    public bool TryGetService<T>(string serviceName, out T service) where T : class
-    {
-        var success = store.TryGetValue(serviceName, out var result);
-        if (!success)
-        {
-            Debug.LogWarning($"[{name}] no service name: \"{serviceName}\"");
-            service = null;
-            return false;
-        }
+		foreach (var consumer in consumers)
+		{
+			consumer.OnFetchService(this);
+		}
+	}
 
-        service = result as T;
-        if (service == null)
-        {
-            Debug.LogWarning(
-                $"[{name}] service type mismatch: \"{serviceName}\" is [{result.GetType()}], not [{typeof(T)}]");
-        }
+	public void RegisterService(string serviceName, object service)
+	{
+		Debug.Log($"[{name}] register service: \"{serviceName}\" [{service.GetType()}]", this);
 
-        return service != null;
-    }
+		if (store.ContainsKey(serviceName))
+		{
+			Debug.LogWarning($"[{name}] service {serviceName} already registered", this);
+		}
+
+		store[serviceName] = service;
+	}
+
+	public bool TryGetService<T>(string serviceName, out T service) where T : class
+	{
+		service = null;
+		if (!store.TryGetValue(serviceName, out var result))
+		{
+			Debug.LogWarning($"[{name}] no service: \"{serviceName}\"", this);
+			return false;
+		}
+
+		service = result as T;
+		if (service == null)
+		{
+			Debug.LogWarning(
+				$"[{name}] service type mismatch: \"{serviceName}\" is [{result.GetType()}], not [{typeof(T)}]", this);
+			return false;
+		}
+
+		return true;
+	}
 }
-
 
 public interface IServiceProvider
 {
-    void RegisterService(ServiceRegistry registry);
+	void OnRegisterService(ServiceRegistry registry);
 }
 
 public interface IServiceConsumer
 {
-    void FetchService(ServiceRegistry registry);
+	void OnFetchService(ServiceRegistry registry);
 }

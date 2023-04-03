@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -15,7 +15,7 @@ public class RandomMaxStreak<T> where T : IEquatable<T>
 		_maxReroll = maxReroll;
 	}
 
-	public T Next(Func<T> generator)
+	public T Next(Func<T> sampler)
 	{
 		T result;
 		int rerollCount = 0;
@@ -27,14 +27,14 @@ public class RandomMaxStreak<T> where T : IEquatable<T>
 				Debug.Log($"over streak count({_maxStreak}), reroll");
 			}
 
-			result = generator();
+			result = sampler();
 		} while (_history.Count >= _maxStreak
 		         && _history.All(prev => prev.Equals(result))
 		         && rerollCount++ < _maxReroll);
 
 		if (rerollCount >= _maxReroll)
 		{
-			Debug.LogWarning($"over reroll count({_maxReroll}). you may check generator");
+			Debug.LogWarning($"over reroll count({_maxReroll}). you may check the generator");
 		}
 
 		_history.Enqueue(result);

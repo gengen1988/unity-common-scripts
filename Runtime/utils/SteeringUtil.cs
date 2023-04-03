@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public static class SteeringUtil
 {
@@ -10,7 +10,11 @@ public static class SteeringUtil
 
 	public static Vector3 Flee(Vector3 los, Vector3 velocity, float maxSpeed, float evadeDistance)
 	{
-		if (los.magnitude > evadeDistance) return Vector3.zero;
+		if (los.magnitude > evadeDistance)
+		{
+			return Vector3.zero;
+		}
+
 		return -Seek(los, velocity, maxSpeed);
 	}
 
@@ -28,14 +32,15 @@ public static class SteeringUtil
 
 	public static Vector3 Pursue(Vector3 los, Vector3 velocity, Vector3 evaderVelocity, float maxSpeed)
 	{
-		if (!Kinematic.InterceptTime(los, evaderVelocity, maxSpeed, out var timeRequired)) return Vector3.zero;
+		if (!Kinematic.InterceptTime(los, evaderVelocity, maxSpeed, out var timeRequired))
+		{
+			return Vector3.zero;
+		}
 
-		var seekLos = los + evaderVelocity * timeRequired;
-		return Seek(seekLos, velocity, maxSpeed);
-		// TODO 处理迎面撞击，无需预测的情况
+		var targetLos = los + evaderVelocity * timeRequired;
+		return Seek(targetLos, velocity, maxSpeed);
 	}
 
-	// TODO change transform to steering entity
 	public static Vector3 Wander(Transform transform, float wanderDistance, float wanderRadius, float wanderJitter,
 		ref Vector3 wanderTarget)
 	{
