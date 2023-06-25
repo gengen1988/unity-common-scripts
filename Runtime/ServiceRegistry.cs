@@ -4,16 +4,11 @@ using UnityEngine;
 
 public class ServiceRegistry : MonoBehaviour
 {
-	public bool initOnAwake;
-
 	readonly Dictionary<string, object> store = new Dictionary<string, object>();
 
-	void Awake()
+	void Start()
 	{
-		if (initOnAwake)
-		{
-			Init();
-		}
+		Init();
 	}
 
 	public void Init()

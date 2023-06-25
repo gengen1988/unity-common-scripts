@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -20,40 +20,39 @@ public class RandomSequence<T> where T : class
 	public int Count => _availableEntries.Count + _releasedEntries.Count;
 
 	/**
-	 * 循环随机化抓牌，保证下一张和上一张不一样
+	 * Draw card in the deck to ensure that random sampling does not repeat
 	 */
 	public T Draw()
 	{
 		if (Count == 0)
 		{
-			Debug.LogWarning("总数为 0，不可能抓到");
+			Debug.LogWarning("Total 0, impossible to draw");
 			return null;
 		}
 
 		if (_availableEntries.Count == 0)
 		{
-			Debug.Log("抽光了，重新洗牌");
+			Debug.Log("pumped out, reshuffle");
 			Shuffle();
 		}
 
-		T last = _availableEntries.PopLast();
-		return last;
+		return _availableEntries.PopLast();
 	}
 
 	/**
-	 * 给一个条件，返回第一个满足条件的。只在没抓到的牌中找
+	 * Given a condition, return the first one that satisfies the condition. only found in available cards
 	 */
 	public T FindAndTake(Func<T, bool> criteria)
 	{
 		if (Count == 0)
 		{
-			Debug.LogWarning("总数为 0，不可能抓到");
+			Debug.LogWarning("Total 0, impossible to draw");
 			return null;
 		}
 
 		if (_availableEntries.Count == 0)
 		{
-			Debug.Log("抽光了，重新洗牌");
+			Debug.Log("pumped out, reshuffle");
 			Shuffle();
 		}
 
@@ -61,7 +60,7 @@ public class RandomSequence<T> where T : class
 	}
 
 	/**
-	 * 放回卡片
+	 * Put back card 
 	 */
 	public void Discard(T entry)
 	{
@@ -70,20 +69,20 @@ public class RandomSequence<T> where T : class
 
 	private void Shuffle()
 	{
-		// 1. 将剩余的牌放到弃牌堆
+		// 1. Put the remaining cards on the discard pile
 		_releasedEntries.AddRange(_availableEntries);
 		_availableEntries.Clear();
 
-		// 2. 取弃牌堆中，不是最后一个的元素中，随机一个。作为第一个元素
+		// 2. Take a random one of the elements that are not the last in the discard pile, as the first element
 		T firstElement = _releasedEntries[Random.Range(0, _releasedEntries.Count - 1)];
 
-		// 3. 将弃牌堆打乱作为新的牌库，然后将刚刚找出的牌作为第一个
+		// 3. Shuffle the discard pile as a new card library, and then use the card just found as the first
 		_availableEntries.AddRange(_releasedEntries
 			.Where(el => el != firstElement)
 			.OrderBy(_ => Random.value)
 			.Append(firstElement));
 
-		// 4. 清理弃牌堆
+		// 4. clear the discard pile
 		_releasedEntries.Clear();
 	}
 

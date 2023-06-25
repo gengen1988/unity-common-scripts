@@ -20,15 +20,14 @@ public static class MathUtil
 		return rotation * Vector3.right;
 	}
 
+	public static Quaternion VectorToQuaternion(Vector3 direction)
+	{
+		return Quaternion.FromToRotation(Vector3.right, direction);
+	}
+
 	public static float QuaternionToAngle(Quaternion rotation)
 	{
 		return rotation.eulerAngles.z;
-	}
-
-	public static Vector3 AngleToVector(float degree)
-	{
-		var rad = degree * Mathf.Deg2Rad;
-		return new Vector3(Mathf.Cos(rad), Mathf.Sin(rad));
 	}
 
 	public static Quaternion AngleToQuaternion(float degree)
@@ -36,14 +35,15 @@ public static class MathUtil
 		return Quaternion.AngleAxis(degree, Vector3.forward);
 	}
 
-	public static Quaternion VectorToQuaternion(Vector3 direction)
+	public static Vector2 AngleToVector(float degree)
 	{
-		return Quaternion.FromToRotation(Vector3.right, direction);
+		var rad = degree * Mathf.Deg2Rad;
+		return new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
 	}
 
 	public static float VectorToAngle(Vector2 direction)
 	{
-		return Vector2.SignedAngle(Vector2.right, direction);
+		return Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
 	}
 
 	/**
@@ -131,7 +131,7 @@ public static class MathUtil
 		return 0;
 	}
 
-	public static Vector3 VectorSubtractClampZero(Vector3 vector, float magnitude)
+	public static Vector3 VectorSubtractClamp(Vector3 vector, float magnitude)
 	{
 		return vector.normalized * Mathf.Max(vector.magnitude - magnitude, 0f);
 	}
