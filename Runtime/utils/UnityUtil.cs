@@ -43,6 +43,22 @@ public static class UnityUtil
 	}
 
 	/**
+	 * 确保一定有该名称的 child
+	 */
+	public static Transform EnsureChild(this Transform root, string childName)
+	{
+		Transform child = root.Find(childName);
+		if (!child)
+		{
+			GameObject go = new GameObject(childName);
+			child = go.transform;
+			child.SetParent(root, false);
+		}
+
+		return child;
+	}
+
+	/**
 	 * 清理 transform 下的子物体
 	 */
 	public static void DestroyChildren(this Transform root)

@@ -1,7 +1,8 @@
 using System;
 using UnityEngine;
 
-public abstract class StatefulBehaviour<TContext, TState> : MonoBehaviour where TState : State<TContext>, new()
+public abstract class StatefulBehaviour<TContext, TStartState> : MonoBehaviour
+	where TStartState : State<TContext>, new()
 {
 	private readonly StateMachine<TContext> _stateMachine;
 
@@ -15,19 +16,14 @@ public abstract class StatefulBehaviour<TContext, TState> : MonoBehaviour where 
 		else
 		{
 			Type type = GetType();
-			Debug.LogError($"{type} should inherit StatefulBehaviour<{type}, StartState>");
+			Debug.LogError($"{type} should inherit StatefulBehaviour<{type}, TStartState>", this);
 		}
 
-		_stateMachine.TransitionTo<TState>();
+		_stateMachine.TransitionTo<TStartState>();
 	}
 
 	protected virtual void Update()
 	{
 		_stateMachine.Tick();
-	}
-
-	protected void TransitionTo<TStateNext>() where TStateNext : State<TContext>, new()
-	{
-		_stateMachine.TransitionTo<TStateNext>();
 	}
 }

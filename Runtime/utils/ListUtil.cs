@@ -6,6 +6,11 @@ using Object = UnityEngine.Object;
 
 public static class ListUtil
 {
+	public static IEnumerable<T> EmptyIfNull<T>(this IEnumerable<T> collection)
+	{
+		return collection ?? Enumerable.Empty<T>();
+	}
+
 	public static T PopLast<T>(this IList<T> list)
 	{
 		T result = list[list.Count - 1];
@@ -42,7 +47,7 @@ public static class ListUtil
 	}
 
 	/**
-	 * note that items should contains no duplicated entries
+	 * note that list should contains no duplicated entries
 	 */
 	public static bool IterateSolve<T>(
 		this IList<T> list,
