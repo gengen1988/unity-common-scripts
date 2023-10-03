@@ -45,7 +45,7 @@ public static class SteeringUtil
 		ref Vector3 wanderTarget)
 	{
 		var extents = new Vector3(wanderJitter, wanderJitter);
-		wanderTarget += RandomUtil.RandomPosition(Vector3.zero, extents, Quaternion.identity);
+		wanderTarget += RandomUtil.RandomPointInRectangle(Vector3.zero, extents, Quaternion.identity);
 		wanderTarget = wanderTarget.normalized * wanderRadius;
 		var targetLocal = wanderTarget + Vector3.right * wanderDistance;
 		var targetWorld = transform.TransformPoint(targetLocal);
