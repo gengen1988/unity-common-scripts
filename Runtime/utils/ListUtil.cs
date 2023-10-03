@@ -55,7 +55,7 @@ public static class ListUtil
      * note that list should contains no duplicated entries
      */
     public static bool IterateSolve<T>(
-        this IList<T> list,
+        this IList<T> list, // do not add or remove element when use array
         Func<T, T, bool> criteria,
         Action<IList<T>, int, int> task, // this is for value type (struct)
         int maxIterate = 20

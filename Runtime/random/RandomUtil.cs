@@ -8,11 +8,11 @@ public static class RandomUtil
      */
     public static void Shuffle<T>(this IList<T> list)
     {
-        int n = list.Count;
+        var n = list.Count;
         while (n > 1)
         {
             n--;
-            int k = Random.Range(0, n + 1);
+            var k = Random.Range(0, n + 1);
             (list[k], list[n]) = (list[n], list[k]);
         }
     }
@@ -28,7 +28,7 @@ public static class RandomUtil
     /**
      * 从列表中随机拿走一个
      */
-    public static T RandomTake<T>(this IList<T> list)
+    public static T RandomTake<T>(this List<T> list)
     {
         var index = Random.Range(0, list.Count);
         var result = list[index];
@@ -41,7 +41,7 @@ public static class RandomUtil
      */
     public static bool Check(float successRate)
     {
-        float roll = Random.value;
+        var roll = Random.value;
         if (roll > successRate)
         {
             return false;
@@ -61,7 +61,7 @@ public static class RandomUtil
      */
     public static float SampleWithExpect(float expect = .5f)
     {
-        float value = Random.value;
+        var value = Random.value;
         if (value < expect)
         {
             return Mathf.Sqrt(expect * value);
@@ -78,13 +78,21 @@ public static class RandomUtil
      */
     public static float SampleWithExpect(float from, float to, float expect)
     {
-        float delta = to - from;
-        float distance = expect - from;
-        float ratio = distance / delta;
+        var delta = to - from;
+        var distance = expect - from;
+        var ratio = distance / delta;
         return from + SampleWithExpect(ratio) * delta;
     }
 
-    public static Vector3 RandomPointInRectangle(Vector3 center, Vector3 extents, Quaternion rotation = default)
+    public static Vector3 RandomPointInBox(Vector3 center, Vector3 extents)
+    {
+        var x = Random.Range(-extents.x, extents.x);
+        var y = Random.Range(-extents.y, extents.y);
+        var z = Random.Range(-extents.z, extents.z);
+        return center + new Vector3(x, y, z);
+    }
+
+    public static Vector3 RandomPointInBox(Vector3 center, Vector3 extents, Quaternion rotation)
     {
         var x = Random.Range(-extents.x, extents.x);
         var y = Random.Range(-extents.y, extents.y);
@@ -94,7 +102,7 @@ public static class RandomUtil
 
     public static Vector2 RandomDirection()
     {
-        var angle = Random.Range(0, 360);
+        var angle = Random.Range(0, 360f);
         return MathUtil.VectorByAngle(angle);
     }
 }

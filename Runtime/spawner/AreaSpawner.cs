@@ -35,7 +35,7 @@ public class AreaSpawner : CountSpawner
 	protected override GameObject Spawn()
 	{
 		var rotation = transform.rotation;
-		var pos = RandomUtil.RandomPointInRectangle(transform.position, extends, rotation);
+		var pos = RandomUtil.RandomPointInBox(transform.position, extends, rotation);
 		return Spawn(pos, rotation);
 	}
 }
