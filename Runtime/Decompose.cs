@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,68 +7,68 @@ using UnityEngine;
  */
 public class Decompose : MonoBehaviour
 {
-	public Transform[] Children;
+    public Transform[] Children;
 
-	private GameObject[] _instances;
+    private GameObject[] _instances;
 
-	private void Start()
-	{
-		Execute();
-	}
+    private void Start()
+    {
+        Execute();
+    }
 
-	private void OnDestroy()
-	{
-		if (_instances == null)
-		{
-			return;
-		}
+    private void OnDestroy()
+    {
+        if (_instances == null)
+        {
+            return;
+        }
 
-		foreach (GameObject go in _instances)
-		{
-			if (go)
-			{
-				Destroy(go);
-			}
-		}
-	}
+        foreach (GameObject go in _instances)
+        {
+            if (go)
+            {
+                Destroy(go);
+            }
+        }
+    }
 
-	public void Execute()
-	{
-		if (Children == null)
-		{
-			return;
-		}
+    public void Execute()
+    {
+        if (Children == null)
+        {
+            return;
+        }
 
-		if (_instances != null)
-		{
-			Debug.LogError("can not decompose twice", this);
-			return;
-		}
+        if (_instances != null)
+        {
+            Debug.LogError("can not decompose twice", this);
+            return;
+        }
 
-		Transform self = transform;
-		List<GameObject> instances = new List<GameObject>();
-		foreach (Transform child in Children)
-		{
-			if (!child.IsChildOf(self))
-			{
-				Debug.LogWarning($"{child.name} is not child of this transform, should not be decomposed", this);
-				continue;
-			}
+        Transform self = transform;
+        List<GameObject> instances = new List<GameObject>();
+        foreach (Transform child in Children)
+        {
+            if (!child.IsChildOf(self))
+            {
+                Debug.LogWarning($"{child.name} is not child of this transform, should not be decomposed", this);
+                continue;
+            }
 
-			if (!child.gameObject.activeSelf)
-			{
-				Debug.LogWarning($"{child.name} is deactivated, do not decompose", this);
-				continue;
-			}
+            if (!child.gameObject.activeSelf)
+            {
+                Debug.LogWarning($"{child.name} is deactivated, do not decompose", this);
+                continue;
+            }
 
-			// instantiate and hide
-			Transform instance = Instantiate(child, self.parent);
-			child.gameObject.SetActive(false);
+            // instantiate and hide
+            Transform instance = Instantiate(child, self.parent);
+            child.gameObject.SetActive(false);
 
-			// index
-			instances.Add(instance.gameObject);
-		}
+            // index
+            instances.Add(instance.gameObject);
+        }
 
-		_instances = instances.ToArray();
-	}
+        _instances = instances.ToArray();
+    }
 }

@@ -175,9 +175,22 @@ public static class MathUtil
 
     public static int SignWithZero(float number)
     {
-        if (number > 0) return 1;
-        if (number < 0) return -1;
-        return 0;
+        if (Mathf.Abs(number) <= Mathf.Epsilon)
+        {
+            return 0;
+        }
+        else if (number > 0)
+        {
+            return 1;
+        }
+        else if (number < 0)
+        {
+            return -1;
+        }
+        else
+        {
+            return 0;
+        }
     }
 
     public static Vector3 VectorSubtractClamp(Vector3 vector, float magnitude)
@@ -202,8 +215,8 @@ public static class MathUtil
 
     public static IEnumerable<float> GenerateExponentialCurve(float min, float max, int levels, float factor = 1)
     {
-        float delta = max - min;
-        for (int i = 0; i < levels; ++i)
+        var delta = max - min;
+        for (var i = 0; i < levels; ++i)
         {
             yield return Mathf.Pow((float)i / (levels - 1), factor) * delta + min;
         }
@@ -211,13 +224,13 @@ public static class MathUtil
 
     public static IEnumerable<Vector3> SliceLine(Vector3 from, Vector3 to, int count)
     {
-        Vector3 line = to - from;
-        float deltaX = line.x / (count - 1);
-        float deltaY = line.y / (count - 1);
-        for (int i = 0; i < count; ++i)
+        var line = to - from;
+        var deltaX = line.x / (count - 1);
+        var deltaY = line.y / (count - 1);
+        for (var i = 0; i < count; ++i)
         {
-            float x = from.x + deltaX * i;
-            float y = from.y + deltaY * i;
+            var x = from.x + deltaX * i;
+            var y = from.y + deltaY * i;
             yield return new Vector3(x, y);
         }
     }
