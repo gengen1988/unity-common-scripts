@@ -2,27 +2,26 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-
 public class CountSpawner : Spawner
 {
 	public int maxNumber = 3;
 	public float produceTime = 1f;
 
-	readonly List<GameObject> spawned = new List<GameObject>();
+	private readonly List<GameObject> spawned = new List<GameObject>();
 
-	void Start()
+	private void Start()
 	{
 		StartCoroutine(SpawnTask());
 	}
 
-	IEnumerator SpawnTask()
+	private IEnumerator SpawnTask()
 	{
 		while (true)
 		{
 			while (!enabled) yield return null;
 
 			// count check
-			spawned.RemoveEmpty();
+			spawned.RemoveAll(instance => !instance);
 			if (spawned.Count >= maxNumber)
 			{
 				yield return null;

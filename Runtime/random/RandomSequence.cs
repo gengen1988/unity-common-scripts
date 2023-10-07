@@ -40,26 +40,6 @@ public class RandomSequence<T> where T : class
 	}
 
 	/**
-	 * Given a condition, return the first one that satisfies the condition. only found in available cards
-	 */
-	public T FindAndTake(Func<T, bool> criteria)
-	{
-		if (Count == 0)
-		{
-			Debug.LogWarning("Total 0, impossible to draw");
-			return null;
-		}
-
-		if (_availableEntries.Count == 0)
-		{
-			Debug.Log("pumped out, reshuffle");
-			Shuffle();
-		}
-
-		return _availableEntries.FindAndRemove(criteria).FirstOrDefault();
-	}
-
-	/**
 	 * Put back card 
 	 */
 	public void Discard(T entry)
@@ -91,25 +71,36 @@ public class RandomSequence<T> where T : class
 		return _releasedEntries;
 	}
 
-	public void MoveToRelease(Func<T, bool> criteria)
+	public bool MoveToTop(Func<T, bool> criteria)
 	{
-		IEnumerable<T> toBeMove = _availableEntries.FindAndRemove(criteria);
-		_releasedEntries.AddRange(toBeMove);
+		if (_availableEntries.TryFindAndTake(criteria, out T toBeMove))
+		{
+			_availableEntries.Add(toBeMove);
+			return true;
+		}
+
+		if (_releasedEntries.TryFindAndTake(criteria, out toBeMove))
+		{
+			_availableEntries.Add(toBeMove);
+			return true;
+		}
+
+		Debug.LogWarning("nothing to move");
+		return false;
 	}
 
-	public void MoveToTop(Func<T, bool> criteria, bool includeReleasedEntries = false, bool shuffle = false)
+	public void MoveToTopAll(Func<T, bool> criteria)
 	{
-		List<T> toBeMove = _availableEntries.FindAndRemove(criteria).ToList();
-		if (includeReleasedEntries)
-		{
-			toBeMove.AddRange(_releasedEntries.FindAndRemove(criteria));
-		}
-
-		if (shuffle)
-		{
-			toBeMove.Shuffle();
-		}
-
+		List<T> toBeMove = new List<T>();
+		toBeMove.AddRange(_availableEntries.FindAndTakeAll(criteria));
+		toBeMove.AddRange(_releasedEntries.FindAndTakeAll(criteria));
+		toBeMove.Shuffle();
 		_availableEntries.AddRange(toBeMove);
+	}
+
+	public void MoveToReleaseAll(Func<T, bool> criteria)
+	{
+		IEnumerable<T> toBeMove = _availableEntries.FindAndTakeAll(criteria);
+		_releasedEntries.AddRange(toBeMove);
 	}
 }

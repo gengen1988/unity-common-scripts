@@ -74,6 +74,7 @@ public class RandomGrid
 		return point;
 	}
 
+	// TODO make it to math util
 	private Vector2 LineBoxIntersect(float lineRad, Vector2 box)
 	{
 		float cornerRad = Mathf.Atan2(box.y, box.x);
