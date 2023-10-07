@@ -10,9 +10,9 @@ public class PredictPosition : MonoBehaviour
         public Vector3 Position;
     }
 
-    public Transform Target;
-
     private readonly Queue<Measure> _measures = new Queue<Measure>();
+
+    public Transform Target { get; private set; }
 
     private void FixedUpdate()
     {
@@ -41,8 +41,9 @@ public class PredictPosition : MonoBehaviour
         return Target && _measures.Count >= 2;
     }
 
-    public void Cleanup()
+    public void TrackTarget(Transform target)
     {
+        Target = target;
         _measures.Clear();
     }
 
