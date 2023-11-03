@@ -1,21 +1,26 @@
 ﻿using System;
 
-
 public class Wait
 {
-	bool done;
-	event Action ready;
+    private bool ready;
+    private event Action callback;
 
-	public void Ready()
-	{
-		done = true;
-		ready?.Invoke();
-		ready = null;
-	}
+    public void Ready()
+    {
+        ready = true;
+        callback?.Invoke();
+        callback = null;
+    }
 
-	public void WhenReady(Action action)
-	{
-		if (done) action();
-		else ready += action;
-	}
+    public void WhenReady(Action action)
+    {
+        if (ready)
+        {
+            action?.Invoke();
+        }
+        else
+        {
+            callback += action;
+        }
+    }
 }
