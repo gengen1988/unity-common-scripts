@@ -7,12 +7,12 @@ public class PredictPosition : MonoBehaviour
     private struct Measure
     {
         public float Time;
-        public Vector3 Position;
+        public Vector2 Position;
     }
 
     private readonly Queue<Measure> _measures = new Queue<Measure>();
 
-    public Transform Target { get; private set; }
+    public KinematicCtrl Target { get; private set; }
 
     private void FixedUpdate()
     {
@@ -24,7 +24,7 @@ public class PredictPosition : MonoBehaviour
         // take snapshot (should in fixed update ensuring stable framerate)
         var measure = new Measure
         {
-            Position = Target.position,
+            Position = Target.Position,
             Time = Time.time,
         };
 
@@ -41,13 +41,13 @@ public class PredictPosition : MonoBehaviour
         return Target && _measures.Count >= 2;
     }
 
-    public void TrackTarget(Transform target)
+    public void TrackTarget(KinematicCtrl target)
     {
         Target = target;
         _measures.Clear();
     }
 
-    public Vector3 Predict(float elapsedTime)
+    public Vector2 Predict(float elapsedTime)
     {
         var velocity = GetVelocity(_measures.First(), _measures.Last());
         var displacement = velocity * elapsedTime;
@@ -55,12 +55,12 @@ public class PredictPosition : MonoBehaviour
         return position + displacement;
     }
 
-    public Vector3 ReadVelocity()
+    public Vector2 ReadVelocity()
     {
         return GetVelocity(_measures.First(), _measures.Last());
     }
 
-    private Vector3 GetVelocity(Measure m1, Measure m2)
+    private Vector2 GetVelocity(Measure m1, Measure m2)
     {
         return (m1.Position - m2.Position) / (m1.Time - m2.Time);
     }
