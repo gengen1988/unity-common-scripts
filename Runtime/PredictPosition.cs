@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+/* uncomment when refactor KinematicCtrl
 public class PredictPosition : MonoBehaviour
 {
     private struct Measure
@@ -74,3 +75,4 @@ public class PredictPosition : MonoBehaviour
         return (v1 - v2) / (t1 - t2);
     }
 }
+*/

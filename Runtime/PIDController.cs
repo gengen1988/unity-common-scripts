@@ -1,6 +1,9 @@
 ﻿using System;
-using Sirenix.OdinInspector;
 using UnityEngine;
+
+#if ODIN_INSPECTOR
+using Sirenix.OdinInspector;
+#endif
 
 [Serializable]
 public class PIDController
@@ -13,9 +16,14 @@ public class PIDController
     private float _integral;
     private float _previousError;
 
-    [ShowInInspector, ReadOnly] private float _input, _output;
+#if ODIN_INSPECTOR
+    [ShowInInspector, ReadOnly] 
+#endif
+    private float _input, _output;
 
+#if ODIN_INSPECTOR
     [Button]
+#endif
     public void Reset()
     {
         _integral = 0;

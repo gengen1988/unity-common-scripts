@@ -42,7 +42,7 @@ public class UINavigationManager : MonoBehaviour
         }
     }
 
-    public void TryEnsureSelection()
+    public void EnsureSelection()
     {
         if (!TryGetCurrentEventSystem(out EventSystem eventSystem))
         {

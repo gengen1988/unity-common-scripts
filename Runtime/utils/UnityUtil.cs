@@ -17,13 +17,13 @@ public static class UnityUtil
         Vector2 mousePosition;
 
 #if ENABLE_INPUT_SYSTEM
-		UnityEngine.InputSystem.Mouse currentMouse = UnityEngine.InputSystem.Mouse.current;
-		if (currentMouse == null)
-		{
-			return Vector2.zero;
-		}
+        UnityEngine.InputSystem.Mouse currentMouse = UnityEngine.InputSystem.Mouse.current;
+        if (currentMouse == null)
+        {
+            return Vector2.zero;
+        }
 
-		mousePosition = currentMouse.position.ReadValue();
+        mousePosition = currentMouse.position.ReadValue();
 #else
         mousePosition = Input.mousePosition;
 #endif
@@ -97,5 +97,47 @@ public static class UnityUtil
     public static IEnumerable<Transform> Children(this Transform transform)
     {
         return transform.Cast<Transform>();
+    }
+
+    /**
+     * move position in camera space ui
+     */
+    public static Vector3 TranslateWithCamera(Vector3 origin, Vector3 delta, Camera translateCamera)
+    {
+        Vector3 currentScreenPoint = translateCamera.WorldToScreenPoint(origin);
+        Vector3 newWorldPoint = translateCamera.ScreenToWorldPoint(currentScreenPoint + delta);
+        return newWorldPoint;
+    }
+
+    /**
+     * can be used to determine two RectTransform intersect
+     */
+    public static Rect GetScreenRect(RectTransform trans)
+    {
+        Vector3 origin = trans.position;
+        Vector2 pivot = trans.pivot;
+
+        // Calculate rect taking into account its scale
+        Vector2 size = Vector2.Scale(trans.rect.size, trans.lossyScale);
+        Rect rect = new Rect(origin.x, origin.y, size.x, size.y);
+
+        // Adjust the x and y coordinates of the Rect based on the pivot point
+        rect.x -= pivot.x * size.x;
+        rect.y -= (1.0f - pivot.y) * size.y;
+        return rect;
+    }
+
+    public static bool Intersects(RectTransform trans1, RectTransform trans2)
+    {
+        Rect rect1 = GetScreenRect(trans1);
+        Rect rect2 = GetScreenRect(trans2);
+        return rect1.Overlaps(rect2);
+    }
+
+    public static bool Contains(RectTransform outer, RectTransform inner)
+    {
+        Rect outerRect = GetScreenRect(outer);
+        Rect innerRect = GetScreenRect(inner);
+        return outerRect.Contains(innerRect.min) && outerRect.Contains(innerRect.max);
     }
 }
