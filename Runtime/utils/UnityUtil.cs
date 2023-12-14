@@ -123,7 +123,7 @@ public static class UnityUtil
 
         // Adjust the x and y coordinates of the Rect based on the pivot point
         rect.x -= pivot.x * size.x;
-        rect.y -= (1.0f - pivot.y) * size.y;
+        rect.y -= pivot.y * size.y;
         return rect;
     }
 
