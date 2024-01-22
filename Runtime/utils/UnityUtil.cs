@@ -140,4 +140,9 @@ public static class UnityUtil
         Rect innerRect = GetScreenRect(inner);
         return outerRect.Contains(innerRect.min) && outerRect.Contains(innerRect.max);
     }
+
+    public static IEnumerable<T> WithExists<T>(this IEnumerable<T> collection) where T : Object
+    {
+        return collection.Where(entry => entry);
+    }
 }

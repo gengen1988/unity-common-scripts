@@ -6,16 +6,6 @@ using Object = UnityEngine.Object;
 
 public static class ListUtil
 {
-	public static IEnumerable<T> EmptyIfNull<T>(this IEnumerable<T> collection)
-	{
-		return collection ?? Enumerable.Empty<T>();
-	}
-
-	public static IEnumerable<T> WithExists<T>(this IEnumerable<T> collection) where T : Object
-	{
-		return collection.Where(entry => entry);
-	}
-
 	public static T PopLast<T>(this List<T> list)
 	{
 		T result = list[list.Count - 1];
@@ -79,10 +69,10 @@ public static class ListUtil
 
 			// find pairs
 			IEnumerable<(T item1, T item2)> tuples = from item1 in list
-				from item2 in list
-				where indexByItem[item1] < indexByItem[item2]
-				where criteria(item1, item2)
-				select (item1, item2);
+													 from item2 in list
+													 where indexByItem[item1] < indexByItem[item2]
+													 where criteria(item1, item2)
+													 select (item1, item2);
 
 			(T item1, T item2)[] tasks = tuples.ToArray();
 
