@@ -3,58 +3,66 @@
 public static class Kinematic
 {
     /**
-     * 命中某点的抛物线角度
+     * 在某一方向上，能达到最远距离的发射角 (重力作用下)
      */
-    public static bool AngleRequiredToHit2D(Vector2 los, float initialSpeed, out float lowAngle, out float highAngle)
+    public static float RangeOptimizedAngle(Vector2 los)
     {
-        return AngleRequiredToHit2D(los, initialSpeed, Physics2D.gravity.magnitude, out lowAngle, out highAngle);
+        float x = los.x;
+        float y = los.y;
+        float m = y / x;
+        float sqrt = Mathf.Sqrt(m * m + 1);
+        float angle = Mathf.Atan(m + sqrt) * Mathf.Rad2Deg;
+
+        // 一四象限
+        if (x < 0)
+        {
+            angle += 90f;
+        }
+
+        return angle;
     }
 
     /**
      * 命中某点的抛物线角度
      */
-    public static bool AngleRequiredToHit2D(Vector2 los, float initialSpeed, float g,
-        out float lowAngle,
-        out float highAngle)
+    public static bool AngleToHit(Vector2 los, float speed, out float shallow, out float steep)
     {
-        var x = los.x;
-        var y = los.y;
-        var v2 = initialSpeed * initialSpeed;
-        var v4 = v2 * v2;
-        var x2 = x * x;
-        var sqrt = Mathf.Sqrt(v4 - g * (g * x2 + 2 * y * v2));
+        float g = Mathf.Abs(Physics2D.gravity.y);
+        return AngleToHit(los, speed, g, out shallow, out steep);
+    }
 
+    /**
+     * 命中某点的抛物线角度
+     */
+    public static bool AngleToHit(Vector2 los, float speed, float g, out float shallow, out float steep)
+    {
+        float x = los.x;
+        float y = los.y;
+        float v2 = speed * speed;
+        float v4 = v2 * v2;
+        float x2 = x * x;
+        float sqrt = Mathf.Sqrt(v4 - g * (g * x2 + 2 * y * v2));
+
+        // 无法命中时，角度为在视线上能达到最远距离的角度
         if (float.IsNaN(sqrt))
         {
-            lowAngle = highAngle = float.NaN;
+            shallow = steep = RangeOptimizedAngle(los);
             return false;
         }
 
-        var solution1 = Mathf.Atan((v2 - sqrt) / (g * x)) * Mathf.Rad2Deg;
-        var solution2 = Mathf.Atan((v2 + sqrt) / (g * x)) * Mathf.Rad2Deg;
+        // 注意：如果目标与发射位置重合，则角度为 NaN
+        float a1 = Mathf.Atan((v2 - sqrt) / (g * x)) * Mathf.Rad2Deg;
+        float a2 = Mathf.Atan((v2 + sqrt) / (g * x)) * Mathf.Rad2Deg;
 
-        if (x == 0)
+        // 一四象限
+        if (x < 0)
         {
-            if (y > 0)
-            {
-                highAngle = lowAngle = 90f;
-            }
-            else
-            {
-                highAngle = lowAngle = -90f;
-            }
-        }
-        else if (x > 0)
-        {
-            lowAngle = solution1;
-            highAngle = solution2;
-        }
-        else
-        {
-            lowAngle = solution1 + 180f;
-            highAngle = solution2 + 180f;
+            a1 += 180f;
+            a2 += 180f;
         }
 
+        shallow = a1;
+        steep = a2;
         return true;
     }
 
@@ -77,22 +85,22 @@ public static class Kinematic
     /**
      * 加速运动的位移
      */
-    public static Vector3 AccelerateDisplacement(Vector3 velocity, Vector3 acceleration, float time)
+    public static Vector3 Displacement(Vector3 velocity, Vector3 acceleration, float time)
     {
         return velocity * time + acceleration * (.5f * time * time);
     }
 
     /**
-     * 子弹命中匀速移动物体所需时间
+     * 命中匀速移动物体所需时间
      */
     public static bool InterceptTime(Vector3 los, Vector3 targetVelocity, float interceptSpeed, out float timeRequired)
     {
-        var a = targetVelocity.sqrMagnitude - interceptSpeed * interceptSpeed;
-        var b = 2f * Vector3.Dot(targetVelocity, los);
-        var c = los.sqrMagnitude;
+        float a = targetVelocity.sqrMagnitude - interceptSpeed * interceptSpeed;
+        float b = 2f * Vector3.Dot(targetVelocity, los);
+        float c = los.sqrMagnitude;
 
         // no solution, can't intercept
-        if (MathUtil.Quadratic(a, b, c, out var t0, out var t1) == 0)
+        if (MathUtil.Quadratic(a, b, c, out float t0, out float t1) == 0)
         {
             timeRequired = float.NaN;
             return false;
@@ -125,5 +133,21 @@ public static class Kinematic
                 return false;
             }
         }
+    }
+
+    /**
+     * 计算发射提前量
+     */
+    public static bool InterceptVector(Vector3 los, Vector3 targetVelocity, float interceptSpeed,
+        out Vector3 predictVector)
+    {
+        if (!InterceptTime(los, targetVelocity, interceptSpeed, out float time))
+        {
+            predictVector = new Vector3(float.NaN, float.NaN);
+            return false;
+        }
+
+        predictVector = los + targetVelocity * time;
+        return true;
     }
 }

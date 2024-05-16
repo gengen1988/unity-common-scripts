@@ -1,53 +1,63 @@
-﻿using System;
+﻿#if UNITY_EDITOR
+using System;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Assertions;
 using Object = UnityEngine.Object;
 
 public static class AssetDatabaseUtil
 {
-	public static void MoveAssetToFolder(Object asset, string targetFolder)
-	{
-		if (!AssetDatabase.Contains(asset))
-		{
-			Debug.LogError($"{asset} is not asset");
-			return;
-		}
+    public static void MoveAssetToFolder(Object asset, string targetFolder)
+    {
+        if (!AssetDatabase.Contains(asset))
+        {
+            Debug.LogError($"{asset} is not asset");
+            return;
+        }
 
-		var oldPath = AssetDatabase.GetAssetPath(asset);
-		var fileName = Path.GetFileName(oldPath);
-		var newPath = Path.Combine(targetFolder, fileName);
-		Debug.Log($"move {oldPath} to {newPath}");
-		AssetDatabase.MoveAsset(oldPath, newPath);
-	}
+        string oldPath = AssetDatabase.GetAssetPath(asset);
+        string fileName = Path.GetFileName(oldPath);
+        string newPath = Path.Combine(targetFolder, fileName);
+        Debug.Log($"move {oldPath} to {newPath}");
+        AssetDatabase.MoveAsset(oldPath, newPath);
+    }
 
-	/**
-	 * Create folders recursively
-	 */
-	public static void Mkdirp(string path)
-	{
-		var separators = new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
-		var segments = path.Split(separators, StringSplitOptions.RemoveEmptyEntries);
-		var parent = "";
+    /**
+     * Create folders recursively.
+     * Deprecated, use Directory.CreateDirectory instead.
+     */
+    [Obsolete]
+    public static void Mkdirp(string path)
+    {
+        char[] separators = new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
+        string[] segments = path.Split(separators, StringSplitOptions.RemoveEmptyEntries);
+        string parent = "";
 
-		foreach (string segment in segments)
-		{
-			if (!AssetDatabase.IsValidFolder(Path.Combine(parent, segment)))
-			{
-				AssetDatabase.CreateFolder(parent, segment);
-			}
+        foreach (string segment in segments)
+        {
+            if (!AssetDatabase.IsValidFolder(Path.Combine(parent, segment)))
+            {
+                AssetDatabase.CreateFolder(parent, segment);
+            }
 
-			parent = Path.Combine(parent, segment);
-		}
-	}
+            parent = Path.Combine(parent, segment);
+        }
+    }
 
-	/**
-	 * Create a new asset at path. Also create missing folders.
-	 */
-	public static void CreateAsset(Object asset, string path)
-	{
-		var directoryPath = Path.GetDirectoryName(path);
-		Mkdirp(directoryPath);
-		AssetDatabase.CreateAsset(asset, path);
-	}
+    /**
+     * Create a new asset at path. Also create missing folders.
+     */
+    public static void CreateAsset(Object asset, string path)
+    {
+        string directoryPath = Path.GetDirectoryName(path);
+        Assert.IsNotNull(directoryPath, $"given path is not valid: {path}");
+        if (!Directory.Exists(directoryPath))
+        {
+            Directory.CreateDirectory(directoryPath);
+        }
+
+        AssetDatabase.CreateAsset(asset, path);
+    }
 }
+#endif

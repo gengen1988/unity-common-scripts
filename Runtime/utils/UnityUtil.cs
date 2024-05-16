@@ -66,9 +66,28 @@ public static class UnityUtil
         return child;
     }
 
-    public static bool EnsureCachedComponent<T>(this GameObject root, ref T variable) where T : Component
+    public static bool EnsureComponent<T>(
+        this GameObject root,
+        ref T component,
+        bool addIfNotExists = false) where T : Component
     {
-        return variable || root.TryGetComponent(out variable);
+        if (component && component.gameObject == root)
+        {
+            return true;
+        }
+
+        if (root.TryGetComponent(out component))
+        {
+            return true;
+        }
+
+        if (!addIfNotExists)
+        {
+            return false;
+        }
+
+        component = root.AddComponent<T>();
+        return component; // handle DisallowMultipleComponent
     }
 
     /**
@@ -78,7 +97,7 @@ public static class UnityUtil
     {
         if (Application.isPlaying)
         {
-            foreach (var child in root.Children())
+            foreach (Transform child in root.Children())
             {
                 Object.Destroy(child.gameObject);
             }
@@ -88,7 +107,7 @@ public static class UnityUtil
             // 在编辑阶段里只能用 DestroyImmediate，而且 DestroyImmediate 用 foreach 会导致漏删
             while (root.childCount > 0)
             {
-                var target = root.GetChild(0);
+                Transform target = root.GetChild(0);
                 Object.DestroyImmediate(target.gameObject);
             }
         }

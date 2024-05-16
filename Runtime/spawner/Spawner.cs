@@ -1,35 +1,34 @@
-﻿using UnityEngine;
+using System.Collections.Generic;
+using UnityEngine;
 
-public abstract class Spawner : MonoBehaviour
+public class Spawner : MonoBehaviour
 {
-    public GameObject prefabToSpawn;
+    public PositionProvider Provider;
+    public GameObject ToBeSpawn;
+    public int MaxNumber = 3;
+    public float ProduceTime = 1f;
 
-    protected virtual GameObject Spawn()
-    {
-        var root = transform;
-        return Spawn(root.position, root.rotation);
-    }
+    private float _cooldownTime;
+    private readonly List<GameObject> spawned = new List<GameObject>();
 
-    protected GameObject Spawn(Vector3 position, Quaternion rotation)
+    private void FixedUpdate()
     {
-        if (prefabToSpawn)
+        // count check
+        spawned.RemoveAll(instance => !instance);
+        if (spawned.Count >= MaxNumber)
         {
-            Debug.Log($"spawn: {prefabToSpawn.name}");
-            var instance = Instantiate(prefabToSpawn, position, rotation);
-            foreach (var spawnable in instance.GetComponentsInChildren<ISpawnable>())
-            {
-                spawnable.OnSpawn(this);
-            }
-
-            return instance;
+            return;
         }
 
-        Debug.LogWarning("no prefab to spawn");
-        return null;
-    }
-}
+        // produce
+        if (_cooldownTime <= 0)
+        {
+            Vector3 position = Provider.GetRandomPosition();
+            GameObject newObj = Instantiate(ToBeSpawn, position, Quaternion.identity);
+            spawned.Add(newObj);
+            _cooldownTime += ProduceTime;
+        }
 
-public interface ISpawnable
-{
-    void OnSpawn(Spawner spawner);
+        _cooldownTime -= Time.deltaTime;
+    }
 }

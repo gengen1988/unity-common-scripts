@@ -1,11 +1,11 @@
 ﻿using System;
 
-public class Wait
+public struct ReadySignal
 {
     private bool ready;
     private event Action callback;
 
-    public void Ready()
+    public void NotifyReady()
     {
         ready = true;
         callback?.Invoke();
