@@ -14,7 +14,7 @@ public class Wander : SteeringBehaviour
     {
         if (wanderTarget.magnitude == 0)
         {
-            wanderTarget = RandomUtil.RandomPointInBox(Vector3.zero, Vector3.one * wanderRadius, Quaternion.identity);
+            wanderTarget = RandomUtil.PointInBox(Vector3.zero, Vector3.one * wanderRadius, Quaternion.identity);
         }
 
         return SteeringUtil.Wander(self, wanderDistance, wanderRadius, wanderJitter, ref wanderTarget);

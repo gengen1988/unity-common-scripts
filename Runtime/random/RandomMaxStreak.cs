@@ -1,53 +1,54 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
 public class RandomMaxStreak<T> where T : IEquatable<T>
 {
-	private readonly int _maxStreak;
-	private readonly int _maxReroll;
-	private readonly Queue<T> _history = new Queue<T>();
+    private readonly BoundedQueue<T> _history;
 
-	public RandomMaxStreak(int maxStreak = 3, int maxReroll = 20)
-	{
-		_maxStreak = maxStreak;
-		_maxReroll = maxReroll;
-	}
+    public RandomMaxStreak(int maxStreak = 3)
+    {
+        _history = new BoundedQueue<T>(maxStreak);
+    }
 
-	public T Next(Func<T> sampler)
-	{
-		T result;
-		int rerollCount = 0;
+    public T Next(Func<T> sampler, int maxReroll = 20)
+    {
+        int i;
+        T result = default;
 
-		do
-		{
-			if (rerollCount > 0)
-			{
-				Debug.Log($"over streak count({_maxStreak}), reroll");
-			}
+        // roll
+        for (i = 0; i < maxReroll; ++i)
+        {
+            result = sampler();
 
-			result = sampler();
-		} while (_history.Count >= _maxStreak
-		         && _history.All(prev => prev.Equals(result))
-		         && rerollCount++ < _maxReroll);
+            // 数量不足的情况
+            if (_history.Count < _history.Capacity)
+            {
+                break;
+            }
 
-		if (rerollCount >= _maxReroll)
-		{
-			Debug.LogWarning($"over reroll count({_maxReroll}). you may check the generator");
-		}
+            // 有不同的情况
+            if (_history.Any(prev => !prev.Equals(result)))
+            {
+                break;
+            }
 
-		_history.Enqueue(result);
-		while (_history.Count > _maxStreak)
-		{
-			_history.Dequeue();
-		}
+            Debug.Log($"over streak count({_history.Capacity}), reroll");
+        }
 
-		return result;
-	}
+        // 超出上限的警告
+        if (i >= maxReroll)
+        {
+            Debug.LogWarning($"over reroll count({maxReroll}). please check sampler");
+        }
 
-	public void Reset()
-	{
-		_history.Clear();
-	}
+        // record history
+        _history.Enqueue(result);
+        return result;
+    }
+
+    public void Reset()
+    {
+        _history.Clear();
+    }
 }

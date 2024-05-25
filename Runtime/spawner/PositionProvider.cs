@@ -12,6 +12,6 @@ public class PositionProvider : MonoBehaviour
 
     public Vector3 GetRandomPosition()
     {
-        return RandomUtil.RandomPointInBox(transform.position, Size / 2);
+        return RandomUtil.PointInBox(transform.position, Size / 2);
     }
 }

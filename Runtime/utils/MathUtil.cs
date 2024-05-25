@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -13,7 +12,7 @@ public static class MathUtil
     public static float Scale(float value1, float from1, float to1, float from2, float to2)
     {
         // Prevent division by zero
-        if (Math.Abs(from1 - to1) < Mathf.Epsilon)
+        if (Mathf.Approximately(from1, to1))
         {
             return value1;
         }
@@ -76,6 +75,13 @@ public static class MathUtil
     {
         float amount = b * b - 4 * a * c;
 
+        // one solution
+        if (Mathf.Approximately(amount, 0))
+        {
+            solution1 = solution2 = -.5f * b / a;
+            return 1;
+        }
+
         // no solution
         if (amount < 0)
         {
@@ -83,34 +89,22 @@ public static class MathUtil
             return 0;
         }
 
-        // one solution
-        if (amount == 0)
-        {
-            solution1 = solution2 = -.5f * b / a;
-            return 1;
-        }
-
         // two solutions
         float root = Mathf.Sqrt(amount);
         solution1 = (-b + root) / (2 * a);
         solution2 = (-b - root) / (2 * a);
-        // if (solution2 < solution1)
-        // {
-        //     float temp = solution1;
-        //     solution1 = solution2;
-        //     solution2 = temp;
-        // }
         return 2;
-    }
-
-    public static Vector2 Project(Vector2 point, Ray2D ray)
-    {
-        return (Vector2)Vector3.Project(point - ray.origin, ray.direction) + ray.origin;
     }
 
     public static Vector3 Project(Vector3 point, Ray ray)
     {
         return Vector3.Project(point - ray.origin, ray.direction) + ray.origin;
+    }
+
+    public static Vector2 Project(Vector2 point, Ray2D ray)
+    {
+        Ray ray3D = new Ray(ray.origin, ray.direction);
+        return Project(point, ray3D);
     }
 
     public static Vector3 Project(Vector3 point, Vector3 from, Vector3 to)
@@ -149,7 +143,7 @@ public static class MathUtil
         float d2 = Vector3.Cross(to1 - from2, to2 - from2).z;
 
         // parallel check
-        if (Mathf.Abs(d1 - d2) <= Mathf.Epsilon)
+        if (Mathf.Approximately(d1, d2))
         {
             point = new Vector2(float.NaN, float.NaN);
             return false;
@@ -192,7 +186,7 @@ public static class MathUtil
         }
 
         // just fit
-        if (Math.Abs(perpendicularLength - radius) <= Mathf.Epsilon)
+        if (Mathf.Approximately(perpendicularLength, radius))
         {
             point1 = point2 = perpendicular;
             return 1;
@@ -211,7 +205,7 @@ public static class MathUtil
 
     public static int SignWithZero(float number)
     {
-        if (Mathf.Abs(number) <= Mathf.Epsilon)
+        if (Mathf.Approximately(number, 0))
         {
             return 0;
         }
@@ -271,23 +265,23 @@ public static class MathUtil
         }
     }
 
-    public static void BalanceValues(ref float a, ref float b)
-    {
-        if (Math.Abs(Mathf.Sign(a) - Mathf.Sign(b)) < Mathf.Epsilon)
-        {
-            return;
-        }
-
-        float c = a + b;
-        if (Mathf.Abs(a) > Mathf.Abs(b))
-        {
-            a = c;
-            b = 0;
-        }
-        else if (Math.Abs(a) < Math.Abs(b))
-        {
-            a = 0;
-            b = c;
-        }
-    }
+    // public static void BalanceValues(ref float a, ref float b)
+    // {
+    //     if (Math.Abs(Mathf.Sign(a) - Mathf.Sign(b)) < Epsilon)
+    //     {
+    //         return;
+    //     }
+    //
+    //     float c = a + b;
+    //     if (Mathf.Abs(a) > Mathf.Abs(b))
+    //     {
+    //         a = c;
+    //         b = 0;
+    //     }
+    //     else if (Math.Abs(a) < Math.Abs(b))
+    //     {
+    //         a = 0;
+    //         b = c;
+    //     }
+    // }
 }
