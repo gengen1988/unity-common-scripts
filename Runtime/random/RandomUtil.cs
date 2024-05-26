@@ -78,20 +78,13 @@ public static class RandomUtil
         return r <= clamped;
     }
 
-    public static Vector3 PointInBox(Vector3 center, Vector3 extents)
+    public static Vector3 PointInBox(Vector3 size)
     {
+        Vector3 extents = size / 2;
         float x = Random.Range(-extents.x, extents.x);
         float y = Random.Range(-extents.y, extents.y);
         float z = Random.Range(-extents.z, extents.z);
-        return center + new Vector3(x, y, z);
-    }
-
-    public static Vector3 PointInBox(Vector3 center, Vector3 extents, Quaternion rotation)
-    {
-        float x = Random.Range(-extents.x, extents.x);
-        float y = Random.Range(-extents.y, extents.y);
-        float z = Random.Range(-extents.z, extents.z);
-        return center + rotation * new Vector3(x, y, z);
+        return new Vector3(x, y, z);
     }
 
     public static Vector2 PointInDonut(float outer = 1f, float inner = 1f)

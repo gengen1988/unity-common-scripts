@@ -69,15 +69,15 @@ public static class Kinematic
     /**
      * 跳到具体高度所需的初始速度
      */
-    public static float JumpVelocity(float height)
+    public static float JumpVelocityY(float height)
     {
-        return JumpVelocity(height, Physics2D.gravity.y);
+        return JumpVelocityY(height, Physics2D.gravity.y);
     }
 
     /**
      * 跳到具体高度所需的初始速度
      */
-    public static float JumpVelocity(float height, float gravity)
+    public static float JumpVelocityY(float height, float gravity)
     {
         return Mathf.Sqrt(Mathf.Abs(2 * height * gravity));
     }
@@ -91,63 +91,35 @@ public static class Kinematic
     }
 
     /**
-     * 命中匀速移动物体所需时间
+     * 命中匀速移动物体所需方向
      */
-    public static bool InterceptTime(Vector3 los, Vector3 targetVelocity, float interceptSpeed, out float timeRequired)
+    public static bool InterceptVector(Vector3 los, Vector3 targetVelocity, float interceptSpeed, out Vector3 predict)
     {
+        predict = Vector3.zero;
         float a = targetVelocity.sqrMagnitude - interceptSpeed * interceptSpeed;
         float b = 2f * Vector3.Dot(targetVelocity, los);
         float c = los.sqrMagnitude;
 
         // no solution, can't intercept
-        if (MathUtil.Quadratic(a, b, c, out float t0, out float t1) == 0)
+        if (MathUtil.Quadratic(a, b, c, out float t1, out float t2) == 0)
         {
-            timeRequired = float.NaN;
+            return false;
+        }
+
+        // can't intercept in negative time
+        if (t1 < 0 && t2 < 0)
+        {
             return false;
         }
 
         // determine short way
-        if (t0 > 0)
+        if (t2 < t1)
         {
-            if (t1 > 0)
-            {
-                timeRequired = Mathf.Min(t0, t1);
-                return true;
-            }
-            else
-            {
-                timeRequired = t0;
-                return true;
-            }
-        }
-        else
-        {
-            if (t1 > 0)
-            {
-                timeRequired = t1;
-                return true;
-            }
-            else
-            {
-                timeRequired = float.NaN;
-                return false;
-            }
-        }
-    }
-
-    /**
-     * 计算发射提前量
-     */
-    public static bool InterceptVector(Vector3 los, Vector3 targetVelocity, float interceptSpeed,
-        out Vector3 predictVector)
-    {
-        if (!InterceptTime(los, targetVelocity, interceptSpeed, out float time))
-        {
-            predictVector = new Vector3(float.NaN, float.NaN);
-            return false;
+            (t1, t2) = (t2, t1);
         }
 
-        predictVector = los + targetVelocity * time;
+        float time = t1 < 0 ? t2 : t1;
+        predict = los + targetVelocity * time;
         return true;
     }
 }

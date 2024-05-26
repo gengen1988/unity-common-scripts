@@ -23,7 +23,7 @@ public static class MathUtil
     }
 
     /**
-     * remap value from 0 to 1 based to other range
+     * remap value from 0 to 1 based to other range。
      * alias for Mathf.LerpUnclamped
      */
     public static float Remap01(float value01, float a, float b)
@@ -78,7 +78,8 @@ public static class MathUtil
     }
 
     /**
-     * resolve axx + bx + c = 0
+     * resolve axx + bx + c = 0.
+     * solution1 will be smaller
      */
     public static int Quadratic(float a, float b, float c, out float solution1, out float solution2)
     {
