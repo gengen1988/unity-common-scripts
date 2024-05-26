@@ -9,17 +9,26 @@ public static class MathUtil
         return 0.5f * Mathf.PI - Mathf.Atan(f);
     }
 
-    public static float Scale(float value1, float from1, float to1, float from2, float to2)
+    public static float Remap(float fromValue, float fromA, float fromB, float toA, float toB)
     {
         // Prevent division by zero
-        if (Mathf.Approximately(from1, to1))
+        if (Mathf.Approximately(fromA, fromB))
         {
-            return value1;
+            return fromValue;
         }
 
-        float normalizedValue = (value1 - from1) / (to1 - from1);
-        float scaledValue = normalizedValue * (to2 - from2) + from2;
+        float ratio = (fromValue - fromA) / (fromB - fromA); // inverse lerp from range 1
+        float scaledValue = toA + (toB - toA) * ratio; // lerp to range 2
         return scaledValue;
+    }
+
+    /**
+     * remap value from 0 to 1 based to other range
+     * alias for Mathf.LerpUnclamped
+     */
+    public static float Remap01(float value01, float a, float b)
+    {
+        return Mathf.LerpUnclamped(a, b, value01);
     }
 
     public static int Mod(int x, int m)
@@ -243,12 +252,13 @@ public static class MathUtil
         return float.IsNaN(vector.x) || float.IsNaN(vector.y) || float.IsNaN(vector.z);
     }
 
-    public static IEnumerable<float> ExponentialCurve(float min, float max, int levels, float factor = 1)
+    public static IEnumerable<float> ExponentialCurve(float min, float max, int levels, float factor = 1f)
     {
-        float delta = max - min;
+        float range = max - min;
         for (int i = 0; i < levels; ++i)
         {
-            yield return Mathf.Pow((float)i / (levels - 1), factor) * delta + min;
+            float ratio = Mathf.Pow((float)i / (levels - 1), factor);
+            yield return min + ratio * range;
         }
     }
 
@@ -262,6 +272,35 @@ public static class MathUtil
             float x = from.x + deltaX * i;
             float y = from.y + deltaY * i;
             yield return new Vector3(x, y);
+        }
+    }
+
+    /**
+     * a standard sigmoid curve
+     */
+    public static float Logistic(float x, float height, float steepness, float midpoint)
+    {
+        return height / (1 + Mathf.Exp(-steepness * (x - midpoint)));
+    }
+
+    /**
+     * credit to Jason Hise: https://www.jfurness.uk/sigmoid-functions-in-game-design/
+     */
+    public static float Sigmoid01(float x, float steepness = 0.5f, float midpoint = 0.5f)
+    {
+        x = Mathf.Clamp01(x);
+        midpoint = Mathf.Clamp01(midpoint);
+        steepness = Mathf.Clamp01(steepness);
+
+        float c = 2 / (1 - steepness) - 1;
+
+        if (x < midpoint)
+        {
+            return Mathf.Pow(x, c) / Mathf.Pow(midpoint, c - 1);
+        }
+        else
+        {
+            return 1 - Mathf.Pow(1 - x, c) / Mathf.Pow(1 - midpoint, c - 1);
         }
     }
 

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public static class RandomUtil
@@ -19,7 +20,6 @@ public static class RandomUtil
 
     /**
      * 随机采样 n 次的平均值，n 越大越近似正态分布
-     * range in [0.0 .. 1.0] inclusive
      */
     public static float BatesSample(int n = 2)
     {
@@ -34,7 +34,6 @@ public static class RandomUtil
 
     /**
      * 有期望值的随机采样，三角分布
-     * range in [0.0 .. 1.0] inclusive
      */
     public static float TriangularSample(float expect = .5f)
     {
@@ -54,12 +53,6 @@ public static class RandomUtil
      */
     public static T Select<T>(IList<T> list)
     {
-        if (list == null || list.Count == 0)
-        {
-            Debug.LogWarning("对空列表随机挑选，返回默认值");
-            return default;
-        }
-
         return list[Random.Range(0, list.Count)];
     }
 
@@ -68,12 +61,6 @@ public static class RandomUtil
      */
     public static T Take<T>(List<T> list)
     {
-        if (list == null || list.Count == 0)
-        {
-            Debug.LogError("调用异常，返回默认值");
-            return default;
-        }
-
         int index = Random.Range(0, list.Count);
         T result = list[index];
         list.RemoveAt(index);
@@ -86,8 +73,9 @@ public static class RandomUtil
      */
     public static bool Check(float successRate, int n = 3)
     {
+        float clamped = Mathf.Clamp01(successRate);
         float r = BatesSample(n);
-        return r <= successRate;
+        return r <= clamped;
     }
 
     public static Vector3 PointInBox(Vector3 center, Vector3 extents)
@@ -106,18 +94,41 @@ public static class RandomUtil
         return center + rotation * new Vector3(x, y, z);
     }
 
-    public static Vector2 Direction()
+    public static Vector2 PointInDonut(float outer = 1f, float inner = 1f)
     {
-        float angle = Random.Range(0, 360f);
-        return MathUtil.VectorByAngle(angle);
+        float angle = Random.Range(0f, 360f);
+        float length = Random.Range(inner, outer);
+        return MathUtil.VectorByAngle(angle) * length;
     }
 
     public static Quaternion Rotation(float angleRange)
     {
-        float halfRange = angleRange / 2;
+        float half = angleRange / 2;
         float r = BatesSample();
-        float angle = MathUtil.Scale(r, 0, 1, -halfRange, halfRange);
+        float angle = MathUtil.Remap01(r, -half, half);
         Quaternion rotation = MathUtil.QuaternionByAngle(angle);
         return rotation;
+    }
+
+    /**
+     * negative weight is not allowed (zero is fine)
+     */
+    public static int WeightedIndex(params float[] weights)
+    {
+        float totalWeight = weights.Sum();
+        float randomValue = Random.Range(0, totalWeight);
+        float cumulativeWeight = 0f;
+
+        for (int i = 0; i < weights.Length; ++i)
+        {
+            cumulativeWeight += weights[i];
+            if (randomValue < cumulativeWeight)
+            {
+                return i;
+            }
+        }
+
+        // In case of rounding errors, return the last index
+        return weights.Length - 1;
     }
 }

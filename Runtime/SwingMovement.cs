@@ -17,7 +17,7 @@ public class SwingMovement : MonoBehaviour
         {
             return;
         }
-        
+
         Vector2 previousPosition = transform.position;
         float phaseOffset = PhaseDelta * Mathf.PI;
         if (Application.isPlaying)
@@ -67,8 +67,8 @@ public class SwingMovement : MonoBehaviour
 
     private Vector2 CalculateDisplacement(float time, float deltaTime, float phaseOffset)
     {
-        float v1 = MathUtil.Scale(time, 0, Period, 0, 2 * Mathf.PI);
-        float v2 = MathUtil.Scale(time + deltaTime, 0, Period, 0, 2 * Mathf.PI);
+        float v1 = MathUtil.Remap(time,             0, Period, 0, 2 * Mathf.PI);
+        float v2 = MathUtil.Remap(time + deltaTime, 0, Period, 0, 2 * Mathf.PI);
         float deltaX = Amplitude.x * (Mathf.Sin(v2 + phaseOffset) - Mathf.Sin(v1 + phaseOffset));
         float deltaY = Amplitude.y * (Mathf.Sin(v2) - Mathf.Sin(v1));
         return new Vector2(deltaX, deltaY);
