@@ -11,24 +11,66 @@ public static class MathUtil
 
     public static float Remap(float fromValue, float fromA, float fromB, float toA, float toB)
     {
-        // Prevent division by zero
-        if (Mathf.Approximately(fromA, fromB))
-        {
-            return fromValue;
-        }
-
-        float ratio = (fromValue - fromA) / (fromB - fromA); // inverse lerp from range 1
-        float scaledValue = toA + (toB - toA) * ratio; // lerp to range 2
+        float ratio = RemapTo01(fromValue, fromA, fromB);
+        float scaledValue = RemapFrom01(ratio, toA, toB);
         return scaledValue;
     }
 
     /**
-     * remap value from 0 to 1 based to other range。
-     * alias for Mathf.LerpUnclamped
+     * remap value from 0 to 1 based to other range.
+     * alias of Mathf.LerpUnclamped()
      */
-    public static float Remap01(float value01, float a, float b)
+    public static float RemapFrom01(float value01, float a, float b)
     {
-        return Mathf.LerpUnclamped(a, b, value01);
+        return a + (b - a) * value01;
+    }
+
+    /**
+     * like Mathf.InverseLerp() but no clamp
+     */
+    public static float RemapTo01(float value, float a, float b)
+    {
+        return (value - a) / (b - a);
+    }
+
+    /**
+     * fifth-order version of Mathf.SmoothStep().
+     */
+    public static float SmootherStep(float from, float to, float t)
+    {
+        // see: https://en.wikipedia.org/wiki/Smoothstep
+        float y = t * t * t * (t * (6 * t - 15) + 10);
+        return Mathf.Lerp(from, to, y);
+    }
+
+    /**
+     * a standard sigmoid curve.
+     * easier pan than Sigmoid01()
+     */
+    public static float Logistic(float x, float steepness, float midpoint)
+    {
+        return 1 / (1 + Mathf.Exp(-steepness * (x - midpoint)));
+    }
+
+    /**
+     * credit to Jason Hise: https://www.jfurness.uk/sigmoid-functions-in-game-design/
+     */
+    public static float Sigmoid01(float x, float steepness = 0.5f, float midpoint = 0.5f)
+    {
+        x = Mathf.Clamp01(x);
+        midpoint = Mathf.Clamp01(midpoint);
+        steepness = Mathf.Clamp01(steepness);
+
+        float c = 2 / (1 - steepness) - 1;
+
+        if (x < midpoint)
+        {
+            return Mathf.Pow(x, c) / Mathf.Pow(midpoint, c - 1);
+        }
+        else
+        {
+            return 1 - Mathf.Pow(1 - x, c) / Mathf.Pow(1 - midpoint, c - 1);
+        }
     }
 
     public static int Mod(int x, int m)
@@ -78,8 +120,7 @@ public static class MathUtil
     }
 
     /**
-     * resolve axx + bx + c = 0.
-     * solution1 will be smaller
+     * resolve axx + bx + c = 0
      */
     public static int Quadratic(float a, float b, float c, out float solution1, out float solution2)
     {
@@ -253,75 +294,99 @@ public static class MathUtil
         return float.IsNaN(vector.x) || float.IsNaN(vector.y) || float.IsNaN(vector.z);
     }
 
-    public static IEnumerable<float> ExponentialCurve(float min, float max, int levels, float factor = 1f)
+    /**
+     * generate a sequence from 0 to 1.
+     * factor equals 1: arithmetic progression;
+     * factor greater than 1: slow boost;
+     * factor less then 1: fast boost;
+     */
+    public static IEnumerable<float> Progress01(int count, float factor = 1f)
     {
-        float range = max - min;
-        for (int i = 0; i < levels; ++i)
+        if (count <= 0)
         {
-            float ratio = Mathf.Pow((float)i / (levels - 1), factor);
-            yield return min + ratio * range;
+            yield break;
         }
-    }
 
-    public static IEnumerable<Vector3> PointsOnLine(int count, Vector3 from, Vector3 to)
-    {
-        Vector3 line = to - from;
-        float deltaX = line.x / (count - 1);
-        float deltaY = line.y / (count - 1);
+        if (count == 1)
+        {
+            yield return Mathf.Pow(0.5f, factor);
+            yield break;
+        }
+
         for (int i = 0; i < count; ++i)
         {
-            float x = from.x + deltaX * i;
-            float y = from.y + deltaY * i;
-            yield return new Vector3(x, y);
+            float ratio = (float)i / (count - 1);
+            yield return Mathf.Pow(ratio, factor);
+        }
+    }
+
+    public static IEnumerable<Vector3> FormationLine(int count, Vector3 from, Vector3 to)
+    {
+        return Progress01(count)
+            .Select(ratio => Vector3.Lerp(from, to, ratio));
+    }
+
+    public static IEnumerable<Vector3> FormationLinePadding(int count, Vector3 from, Vector3 to)
+    {
+        if (count <= 0)
+        {
+            yield break;
+        }
+
+        Vector3 line = to - from;
+        Vector3 delta = line / count;
+        Vector3 start = from + delta / 2;
+        for (int i = 0; i < count; ++i)
+        {
+            Vector3 point = start + delta * i;
+            yield return point;
+        }
+    }
+
+    public static IEnumerable<Vector3> FormationArc(
+        int count,
+        Vector3 center,
+        float radius,
+        Vector3 los,
+        float angle = 360f)
+    {
+        if (count <= 0)
+        {
+            yield break;
+        }
+
+        Quaternion rotation = QuaternionByVector(los);
+        float deltaAngle = angle / count;
+        float startAngle = -angle / 2 + deltaAngle / 2;
+        for (int i = 0; i < count; ++i)
+        {
+            float currentAngle = startAngle + i * deltaAngle;
+            Vector2 direction = VectorByAngle(currentAngle);
+            Vector3 point = center + rotation * direction * radius;
+            yield return point;
         }
     }
 
     /**
-     * a standard sigmoid curve
+     * turn inverse values in to one way, leave sum no changes
      */
-    public static float Logistic(float x, float height, float steepness, float midpoint)
+    public static void BalanceValues(ref float a, ref float b)
     {
-        return height / (1 + Mathf.Exp(-steepness * (x - midpoint)));
-    }
-
-    /**
-     * credit to Jason Hise: https://www.jfurness.uk/sigmoid-functions-in-game-design/
-     */
-    public static float Sigmoid01(float x, float steepness = 0.5f, float midpoint = 0.5f)
-    {
-        x = Mathf.Clamp01(x);
-        midpoint = Mathf.Clamp01(midpoint);
-        steepness = Mathf.Clamp01(steepness);
-
-        float c = 2 / (1 - steepness) - 1;
-
-        if (x < midpoint)
+        if (Mathf.Approximately(Mathf.Sign(a), Mathf.Sign(b)))
         {
-            return Mathf.Pow(x, c) / Mathf.Pow(midpoint, c - 1);
+            return;
         }
-        else
+
+        float sum = a + b;
+        if (Mathf.Abs(a) > Mathf.Abs(b))
         {
-            return 1 - Mathf.Pow(1 - x, c) / Mathf.Pow(1 - midpoint, c - 1);
+            a = sum;
+            b = 0;
+        }
+        else if (Mathf.Abs(a) < Mathf.Abs(b))
+        {
+            a = 0;
+            b = sum;
         }
     }
-
-    // public static void BalanceValues(ref float a, ref float b)
-    // {
-    //     if (Math.Abs(Mathf.Sign(a) - Mathf.Sign(b)) < Epsilon)
-    //     {
-    //         return;
-    //     }
-    //
-    //     float c = a + b;
-    //     if (Mathf.Abs(a) > Mathf.Abs(b))
-    //     {
-    //         a = c;
-    //         b = 0;
-    //     }
-    //     else if (Math.Abs(a) < Math.Abs(b))
-    //     {
-    //         a = 0;
-    //         b = c;
-    //     }
-    // }
 }

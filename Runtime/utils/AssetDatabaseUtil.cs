@@ -1,6 +1,7 @@
 ﻿#if UNITY_EDITOR
 using System;
 using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -58,6 +59,17 @@ public static class AssetDatabaseUtil
         }
 
         AssetDatabase.CreateAsset(asset, path);
+    }
+
+    public static T FindAndLoad<T>(string filter, string[] searchInFolder = null) where T : Object
+    {
+        string[] result = searchInFolder == null
+            ? AssetDatabase.FindAssets(filter)
+            : AssetDatabase.FindAssets(filter, searchInFolder);
+
+        return result.Select(AssetDatabase.GUIDToAssetPath)
+            .Select(AssetDatabase.LoadAssetAtPath<T>)
+            .First(asset => asset);
     }
 }
 #endif

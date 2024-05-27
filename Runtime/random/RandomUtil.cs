@@ -19,7 +19,8 @@ public static class RandomUtil
     }
 
     /**
-     * 随机采样 n 次的平均值，n 越大越近似正态分布
+     * mean of multiple random value.
+     *
      */
     public static float BatesSample(int n = 2)
     {
@@ -33,7 +34,7 @@ public static class RandomUtil
     }
 
     /**
-     * 有期望值的随机采样，三角分布
+     * generates a random number based on a triangular distribution with a specified expected value
      */
     public static float TriangularSample(float expect = .5f)
     {
@@ -98,7 +99,7 @@ public static class RandomUtil
     {
         float half = angleRange / 2;
         float r = BatesSample();
-        float angle = MathUtil.Remap01(r, -half, half);
+        float angle = MathUtil.RemapFrom01(r, -half, half);
         Quaternion rotation = MathUtil.QuaternionByAngle(angle);
         return rotation;
     }
