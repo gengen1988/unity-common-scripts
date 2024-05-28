@@ -295,76 +295,73 @@ public static class MathUtil
     }
 
     /**
-     * generate a sequence from 0 to 1.
-     * factor equals 1: arithmetic progression;
-     * factor greater than 1: slow boost;
-     * factor less then 1: fast boost;
+     * generate a sequence of evenly spaced number from 0 to 1.
      */
-    public static IEnumerable<float> Progress01(int count, float factor = 1f)
+    public static IEnumerable<float> Progress01(int count, bool spaceAround = false)
     {
         if (count <= 0)
         {
             yield break;
         }
 
-        if (count == 1)
+        if (spaceAround)
         {
-            yield return Mathf.Pow(0.5f, factor);
-            yield break;
+            float delta = 1f / count;
+            for (int i = 0; i < count; ++i)
+            {
+                yield return (i + 0.5f) * delta;
+            }
         }
-
-        for (int i = 0; i < count; ++i)
+        else
         {
-            float ratio = (float)i / (count - 1);
-            yield return Mathf.Pow(ratio, factor);
+            if (count == 1)
+            {
+                yield return 0.5f;
+                yield break;
+            }
+
+            float delta = 1f / (count - 1);
+            for (int i = 0; i < count; ++i)
+            {
+                yield return i * delta;
+            }
         }
     }
 
-    public static IEnumerable<Vector3> FormationLine(int count, Vector3 from, Vector3 to)
+    public static IEnumerable<float> Exponential(int count, float from, float to, float factor = 1f)
     {
         return Progress01(count)
-            .Select(ratio => Vector3.Lerp(from, to, ratio));
+            .Select(t => Mathf.Pow(t, factor))
+            .Select(t => Mathf.Lerp(from, to, t));
     }
 
-    public static IEnumerable<Vector3> FormationLinePadding(int count, Vector3 from, Vector3 to)
+    public static IEnumerable<Vector3> FormationLine(
+        int count,
+        Vector3 from,
+        Vector3 to,
+        bool spaceAround = false)
     {
-        if (count <= 0)
-        {
-            yield break;
-        }
-
-        Vector3 line = to - from;
-        Vector3 delta = line / count;
-        Vector3 start = from + delta / 2;
-        for (int i = 0; i < count; ++i)
-        {
-            Vector3 point = start + delta * i;
-            yield return point;
-        }
+        return Progress01(count, spaceAround)
+            .Select(t => Vector3.Lerp(from, to, t));
     }
 
+    /**
+     * spaceAround set to true when drawing a circle with angle 360
+     */
     public static IEnumerable<Vector3> FormationArc(
         int count,
         Vector3 center,
         float radius,
         Vector3 los,
-        float angle = 360f)
+        float angle = 180f,
+        bool spaceAround = false)
     {
-        if (count <= 0)
-        {
-            yield break;
-        }
-
         Quaternion rotation = QuaternionByVector(los);
-        float deltaAngle = angle / count;
-        float startAngle = -angle / 2 + deltaAngle / 2;
-        for (int i = 0; i < count; ++i)
-        {
-            float currentAngle = startAngle + i * deltaAngle;
-            Vector2 direction = VectorByAngle(currentAngle);
-            Vector3 point = center + rotation * direction * radius;
-            yield return point;
-        }
+        float halfAngle = 0.5f * angle;
+        return Progress01(count, spaceAround)
+            .Select(t => Mathf.Lerp(-halfAngle, halfAngle, t))
+            .Select(VectorByAngle)
+            .Select(direction => center + rotation * direction * radius);
     }
 
     /**
