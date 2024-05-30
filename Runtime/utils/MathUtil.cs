@@ -83,9 +83,22 @@ public static class MathUtil
         return (x % m + m) % m;
     }
 
-    public static Vector3 CenterOfMass(IList<Vector3> points)
+    public static Vector2 CenterOfMass(this IEnumerable<Vector2> points)
     {
-        return points.Aggregate(Vector3.zero, (current, sum) => current + sum) / points.Count;
+        return CenterOfMass(points.Select(vector => (Vector3)vector));
+    }
+
+    public static Vector3 CenterOfMass(this IEnumerable<Vector3> points)
+    {
+        Vector3 sum = Vector3.zero;
+        int count = 0;
+        foreach (Vector3 point in points)
+        {
+            sum += point;
+            count++;
+        }
+
+        return sum / count;
     }
 
     public static Vector3 VectorByQuaternion(Quaternion rotation)

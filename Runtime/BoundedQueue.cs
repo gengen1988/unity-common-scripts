@@ -44,7 +44,3 @@ public class BoundedQueue<T> : IEnumerable<T>
         return GetEnumerator();
     }
 }
-
-public class KeyToManyDic<TKey, TValue>
-{
-}
