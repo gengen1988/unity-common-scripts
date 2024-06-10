@@ -121,7 +121,9 @@ public static class MathUtil
 
     public static Quaternion QuaternionByVector(Vector3 direction)
     {
-        return Quaternion.FromToRotation(Vector3.right, direction);
+        Vector3 forward = Vector3.forward;
+        Vector3 upwards = Quaternion.AngleAxis(90f, forward) * direction;
+        return Quaternion.LookRotation(forward, upwards);
     }
 
     public static float AngleByQuaternion(Quaternion rotation)
@@ -395,11 +397,11 @@ public static class MathUtil
         Vector3 center,
         float radius,
         Vector3 los,
-        float angle = 180f,
+        float angleRange = 180f,
         bool spaceAround = false)
     {
         Quaternion rotation = QuaternionByVector(los);
-        float halfAngle = 0.5f * angle;
+        float halfAngle = 0.5f * angleRange;
         return Progress01(count, spaceAround)
             .Select(t => Mathf.Lerp(-halfAngle, halfAngle, t))
             .Select(VectorByAngle)

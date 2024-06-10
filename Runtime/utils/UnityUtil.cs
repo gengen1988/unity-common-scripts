@@ -171,4 +171,16 @@ public static class UnityUtil
     {
         return collection.Where(entry => entry);
     }
+
+    public static void MovePosition(this Transform t, Vector3 newPosition)
+    {
+        if (t.TryGetComponent(out Rigidbody2D rb))
+        {
+            rb.MovePosition(newPosition);
+        }
+        else
+        {
+            t.position = newPosition;
+        }
+    }
 }

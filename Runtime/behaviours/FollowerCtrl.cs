@@ -2,7 +2,7 @@
 using System.Linq;
 using UnityEngine;
 
-public class FollowCtrl : MonoBehaviour
+public class FollowerCtrl : MonoBehaviour
 {
     private struct TransformHistory
     {
@@ -11,8 +11,8 @@ public class FollowCtrl : MonoBehaviour
         public float DeltaTime;
     }
 
-    public Transform[] Segments;
     public float DelayTime;
+    public Transform[] Segments;
 
     private Queue<TransformHistory>[] _history;
 
