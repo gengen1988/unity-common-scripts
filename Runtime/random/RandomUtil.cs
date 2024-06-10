@@ -19,7 +19,7 @@ public static class RandomUtil
     }
 
     /**
-     * mean of multiple random value.
+     * mean of multiple random value
      *
      */
     public static float BatesSample(int n = 2)
@@ -69,7 +69,7 @@ public static class RandomUtil
     }
 
     /**
-     * 给定一个成功机率，返回是否成功。n 越大越极端
+     * 给定一个成功机率，返回是否成功。n 越大越极端。
      * 比方说 n 等于 10 时，0.8 的成功率比均匀分布更容易成功，但不影响 0.5
      */
     public static bool Check(float successRate, int n = 3)

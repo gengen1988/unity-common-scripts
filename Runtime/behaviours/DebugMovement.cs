@@ -3,6 +3,7 @@ using UnityEngine;
 public class DebugMovement : MonoBehaviour
 {
     private Vector2 _velocity;
+    private Vector2 _force;
     private Rigidbody2D _rb;
 
     private void Awake()
@@ -32,7 +33,11 @@ public class DebugMovement : MonoBehaviour
             return;
         }
 
+        Vector2 forceToBeApply = _force * Time.deltaTime;
         Vector2 displacement = _velocity * Time.deltaTime;
+
+        _force = Vector2.zero;
+        _velocity += forceToBeApply;
         _rb.MovePosition(_rb.position + displacement);
     }
 
@@ -42,6 +47,15 @@ public class DebugMovement : MonoBehaviour
         if (_rb && !_rb.isKinematic)
         {
             _rb.velocity = velocity;
+        }
+    }
+
+    public void AddForce(Vector2 force)
+    {
+        _force += force;
+        if (_rb && !_rb.isKinematic)
+        {
+            _rb.AddForce(force);
         }
     }
 }

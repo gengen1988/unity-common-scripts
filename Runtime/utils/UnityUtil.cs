@@ -9,6 +9,13 @@ public static class UnityUtil
         return GameObject.FindWithTag("Player");
     }
 
+    public static Vector2 GetInputVector()
+    {
+        float h = Input.GetAxisRaw("Horizontal");
+        float v = Input.GetAxisRaw("Vertical");
+        return new Vector2(h, v);
+    }
+
     /**
      * 取得鼠标在世界座标的位置。兼容 InputSystem
      */

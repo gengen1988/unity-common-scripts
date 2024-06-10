@@ -6,8 +6,8 @@ public class DebugInput : MonoBehaviour
 {
     public enum TriggerType
     {
-        Repeat,
         Once,
+        Repeat,
     }
 
     [Serializable]

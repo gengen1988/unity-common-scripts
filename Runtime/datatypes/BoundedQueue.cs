@@ -4,6 +4,7 @@ using System.Collections.Generic;
 public class BoundedQueue<T> : IEnumerable<T>
 {
     private readonly int _capacity;
+
     private readonly Queue<T> _queue;
 
     public int Capacity => _capacity;
@@ -27,6 +28,11 @@ public class BoundedQueue<T> : IEnumerable<T>
     public T Dequeue()
     {
         return _queue.Dequeue();
+    }
+
+    public T Peek()
+    {
+        return _queue.Peek();
     }
 
     public void Clear()

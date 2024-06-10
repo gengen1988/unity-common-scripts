@@ -33,6 +33,19 @@ public static class MathUtil
         return (value - a) / (b - a);
     }
 
+    public static float LerpTimeCorrection(float steepness)
+    {
+        return LerpTimeCorrection(steepness, Time.deltaTime);
+    }
+
+    public static float LerpTimeCorrection(float steepness, float deltaTime)
+    {
+        // see: https://gamedev.stackexchange.com/questions/149103/why-use-time-deltatime-in-lerping-functions
+        const float REFERENCE_FRAME_RATE = 30f;
+        float s = Mathf.Clamp01(steepness);
+        return 1 - Mathf.Pow(1 - s, deltaTime * REFERENCE_FRAME_RATE);
+    }
+
     /**
      * fifth-order version of Mathf.SmoothStep().
      */
@@ -226,6 +239,22 @@ public static class MathUtil
         }
 
         return true;
+    }
+
+    public static Vector2 LineBoxIntersect(float lineRad, Vector2 box)
+    {
+        float cornerRad = Mathf.Atan2(box.y, box.x);
+        float a = Mathf.Tan(lineRad);
+        if (lineRad < cornerRad)
+        {
+            float y = a * box.x;
+            return new Vector2(box.x, y);
+        }
+        else
+        {
+            float x = box.y / a;
+            return new Vector2(x, box.y);
+        }
     }
 
     /**

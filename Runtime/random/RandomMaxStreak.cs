@@ -47,7 +47,7 @@ public class RandomMaxStreak<T> where T : IEquatable<T>
         return result;
     }
 
-    public void Reset()
+    public void Clear()
     {
         _history.Clear();
     }
