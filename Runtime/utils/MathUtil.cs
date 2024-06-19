@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -96,22 +98,96 @@ public static class MathUtil
         return (x % m + m) % m;
     }
 
-    public static Vector2 CenterOfMass(this IEnumerable<Vector2> points)
-    {
-        return CenterOfMass(points.Select(vector => (Vector3)vector));
-    }
-
-    public static Vector3 CenterOfMass(this IEnumerable<Vector3> points)
+    private static Vector3 CenterOfMassList<T>(List<T> points, Func<T, Vector3> selector)
     {
         Vector3 sum = Vector3.zero;
         int count = 0;
-        foreach (Vector3 point in points)
+        foreach (T point in points)
         {
-            sum += point;
+            if (selector != null)
+            {
+                sum += selector(point);
+            }
+            else
+            {
+                sum += point switch
+                {
+                    Vector3 v3 => v3,
+                    Vector2 v2 => v2,
+                    _ => throw new Exception("type mismatch")
+                };
+            }
+
             count++;
         }
 
         return sum / count;
+    }
+
+    private static Vector3 CenterOfMassArray<T>(T[] points, Func<T, Vector3> selector)
+    {
+        Vector3 sum = Vector3.zero;
+        int count = 0;
+        foreach (T point in points)
+        {
+            if (selector != null)
+            {
+                sum += selector(point);
+            }
+            else
+            {
+                sum += point switch
+                {
+                    Vector3 v3 => v3,
+                    Vector2 v2 => v2,
+                    _ => throw new Exception("type mismatch")
+                };
+            }
+
+            count++;
+        }
+
+        return sum / count;
+    }
+
+    private static Vector3 CenterOfMassGeneric<T>(IEnumerable<T> points, Func<T, Vector3> selector)
+    {
+        Vector3 sum = Vector3.zero;
+        int count = 0;
+        foreach (T point in points)
+        {
+            if (selector != null)
+            {
+                sum += selector(point);
+            }
+            else
+            {
+                sum += point switch
+                {
+                    Vector3 v3 => v3,
+                    Vector2 v2 => v2,
+                    _ => throw new Exception("type mismatch")
+                };
+            }
+
+            count++;
+        }
+
+        return sum / count;
+    }
+
+    public static Vector3 CenterOfMass<T>(this IEnumerable<T> points, Func<T, Vector3> selector = null)
+    {
+        switch (points)
+        {
+            case List<T> list:
+                return CenterOfMassList(list, selector);
+            case T[] array:
+                return CenterOfMassArray(array, selector);
+            default:
+                // this has allocation memory for IEnumerable
+                return CenterOfMassGeneric(points, selector);
+        }
     }
 
     public static Vector3 VectorByQuaternion(Quaternion rotation)
@@ -128,7 +204,7 @@ public static class MathUtil
 
     public static float AngleByQuaternion(Quaternion rotation)
     {
-        return rotation.eulerAngles.z;
+        return Mathf.Repeat(rotation.eulerAngles.z, 360f) - 180f;
     }
 
     public static Quaternion QuaternionByAngle(float degree)
@@ -145,6 +221,16 @@ public static class MathUtil
     public static float AngleByVector(Vector2 direction)
     {
         return Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+    }
+
+    public static Quaternion DeltaQuaternion(Quaternion from, Quaternion to)
+    {
+        return to * Quaternion.Inverse(from);
+    }
+
+    public static float FixedPointRound(float value, int digits = 5)
+    {
+        return (float)Math.Round(value, digits);
     }
 
     /**

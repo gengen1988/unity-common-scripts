@@ -1,21 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-/**
- * fixed update order
- * -300: perception
- * -200: ctrl
- * -100: fixed logic calculation (constraint)
- *    0: rigidbody move position or transform change
- *  100: after movement
- */
+[Obsolete]
 [DefaultExecutionOrder(100)]
-public class FollowerCtrl : MonoBehaviour
+public class FollowerCtrlBak : MonoBehaviour
 {
     public float DelayTime = 0.2f;
     public float StoreOctave = 1f;
-    public GameObject[] Segments;
+    public Transform[] Segments;
 
     private readonly LinkedList<TransformSnapshot> _history = new();
 
@@ -26,12 +20,13 @@ public class FollowerCtrl : MonoBehaviour
 
     private void Tick(float deltaTime)
     {
+        // follow target
+        Vector3 headPosition = transform.position;
+
         // record history
-        Transform head = transform;
         _history.AddFirst(new TransformSnapshot
         {
-            Position = head.position,
-            Rotation = head.rotation,
+            Position = headPosition,
             DeltaTime = deltaTime,
         });
         float maxTime = DelayTime * Segments.Length * StoreOctave;
@@ -53,7 +48,7 @@ public class FollowerCtrl : MonoBehaviour
                     break;
                 }
 
-                MoveSegment(index, snapshot);
+                SetPosition(index, snapshot.Position);
                 index++;
 
                 lastSnapshot = snapshot;
@@ -66,31 +61,14 @@ public class FollowerCtrl : MonoBehaviour
         // setup remaining segments
         while (index < Segments.Length)
         {
-            MoveSegment(index, lastSnapshot);
+            SetPosition(index, lastSnapshot.Position);
             index++;
         }
     }
 
-    private void MoveSegment(int index, TransformSnapshot snapshot)
+    private void SetPosition(int index, Vector3 position)
     {
-        GameObject go = Segments[index];
-        if (!go)
-        {
-            return;
-        }
-
-        // move actor
-        if (go.TryGetComponent(out Rigidbody2D rb))
-        {
-            rb.MovePosition(snapshot.Position);
-            rb.MoveRotation(snapshot.Rotation);
-        }
-        // move slot
-        else
-        {
-            Transform slot = go.transform;
-            slot.position = snapshot.Position;
-            slot.rotation = snapshot.Rotation;
-        }
+        Transform segment = Segments[index];
+        segment.position = position;
     }
 }

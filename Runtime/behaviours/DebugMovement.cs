@@ -33,18 +33,23 @@ public class DebugMovement : MonoBehaviour
             return;
         }
 
+        // calc
         Vector2 forceToBeApply = _force * Time.deltaTime;
         Vector2 displacement = _velocity * Time.deltaTime;
 
-        _force = Vector2.zero;
-        _velocity += forceToBeApply;
+        // apply
+        _rb.velocity = _velocity;
         _rb.MovePosition(_rb.position + displacement);
+        _velocity += forceToBeApply;
+
+        // cleanup
+        _force = Vector2.zero;
     }
 
     public void SetVelocity(Vector2 velocity)
     {
         _velocity = velocity;
-        if (_rb && !_rb.isKinematic)
+        if (_rb)
         {
             _rb.velocity = velocity;
         }
@@ -53,7 +58,7 @@ public class DebugMovement : MonoBehaviour
     public void AddForce(Vector2 force)
     {
         _force += force;
-        if (_rb && !_rb.isKinematic)
+        if (_rb)
         {
             _rb.AddForce(force);
         }

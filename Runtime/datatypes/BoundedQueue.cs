@@ -5,7 +5,7 @@ public class BoundedQueue<T> : IEnumerable<T>
 {
     private readonly int _capacity;
 
-    private readonly Queue<T> _queue;
+    private readonly LinkedList<T> _queue;
 
     public int Capacity => _capacity;
     public int Count => _queue.Count;
@@ -13,26 +13,33 @@ public class BoundedQueue<T> : IEnumerable<T>
     public BoundedQueue(int capacity)
     {
         _capacity = capacity;
-        _queue = new Queue<T>();
+        _queue = new LinkedList<T>();
     }
 
     public void Enqueue(T item)
     {
-        _queue.Enqueue(item);
+        _queue.AddFirst(item);
         while (_queue.Count > _capacity)
         {
-            _queue.Dequeue();
+            _queue.RemoveLast();
         }
     }
 
     public T Dequeue()
     {
-        return _queue.Dequeue();
+        T result = _queue.Last.Value;
+        _queue.RemoveLast();
+        return result;
     }
 
-    public T Peek()
+    public T PeekHead()
     {
-        return _queue.Peek();
+        return _queue.First.Value;
+    }
+
+    public T PeekTail()
+    {
+        return _queue.Last.Value;
     }
 
     public void Clear()

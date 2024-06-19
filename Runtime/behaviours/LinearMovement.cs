@@ -1,29 +1,20 @@
 ﻿using UnityEngine;
 
-public class LinearMovement : MonoBehaviour
+public class LinearMovement : MonoBehaviour, IMovement
 {
     public float Speed = 5f;
-
-    private Rigidbody2D _rb;
     private BlendMovement _blend;
 
     private void Awake()
     {
-        TryGetComponent(out _rb);
-        TryGetComponent(out _blend);
+        _blend = GetComponentInParent<BlendMovement>();
     }
-
-    private void FixedUpdate()
+    public void Tick(float deltaTime)
     {
-        Vector2 velocity = transform.right * Speed;
-        Vector2 displacement = velocity * Time.deltaTime;
-        if (_blend)
-        {
-            _blend.AddDisplacement(displacement);
-        }
-        else
-        {
-            _rb.MovePosition(_rb.position + displacement);
-        }
+        Quaternion rotation = _blend.GetRotation();
+        Vector3 velocity = rotation * Vector3.right * Speed;
+        Vector3 displacement = velocity * deltaTime;
+        Vector3 position = _blend.GetPosition();
+        _blend.MovePosition(position + displacement);
     }
 }

@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 public static class UnityUtil
 {
@@ -62,39 +64,103 @@ public static class UnityUtil
      */
     public static Transform EnsureChild(this Transform root, string childName)
     {
-        Transform child = root.Find(childName);
+        Transform child;
+        if (root)
+        {
+            child = root.Find(childName);
+        }
+        else
+        {
+            GameObject go = GameObject.Find(childName);
+            child = go && !go.transform.parent ? go.transform : null;
+        }
+
         if (!child)
         {
             GameObject go = new GameObject(childName);
             child = go.transform;
-            child.SetParent(root, false);
+            if (root)
+            {
+                child.SetParent(root, false);
+            }
         }
 
         return child;
     }
 
-    public static bool EnsureComponent<T>(
+    public static void EnsureComponent<T>(
         this GameObject root,
         ref T component,
         bool addIfNotExists = false) where T : Component
     {
+        if (!root)
+        {
+            Debug.LogError("gameObject not exists");
+            return;
+        }
+
         if (component && component.gameObject == root)
         {
-            return true;
+            return;
         }
 
-        if (root.TryGetComponent(out component))
+        if (root.TryGetComponent(out T found))
         {
-            return true;
+            component = found;
+            return;
         }
 
-        if (!addIfNotExists)
+        if (addIfNotExists)
         {
-            return false;
+            component = root.AddComponent<T>();
+            return;
         }
 
-        component = root.AddComponent<T>();
-        return component; // handle DisallowMultipleComponent
+        Debug.LogError($"{typeof(T)} not found on {root}", root);
+    }
+
+    public static void EnsureComponentInParent<T>(
+        this GameObject searchFrom,
+        ref T component) where T : Component
+    {
+        if (!searchFrom)
+        {
+            Debug.LogError("gameObject not exists");
+            return;
+        }
+
+        if (component && searchFrom.transform.IsChildOf(component.transform))
+        {
+            return;
+        }
+
+        T found = searchFrom.GetComponentInParent<T>();
+        if (found)
+        {
+            component = found;
+            return;
+        }
+
+        Debug.LogError($"{typeof(T)} not found above {searchFrom}", searchFrom);
+    }
+
+    public static IEnumerable<T> GetComponentsInChildrenDirectly<T>(this Component root, bool includeInactive = false)
+    {
+        Type rootType = root.GetType();
+        T[] allComponents = root.GetComponentsInChildren<T>(includeInactive);
+        foreach (T component in allComponents)
+        {
+            if (component is not Component unityComponent)
+            {
+                continue;
+            }
+
+            Component belongsTo = unityComponent.GetComponentInParent(rootType);
+            if (belongsTo == root)
+            {
+                yield return component;
+            }
+        }
     }
 
     /**
@@ -170,17 +236,5 @@ public static class UnityUtil
     public static IEnumerable<T> WithExists<T>(this IEnumerable<T> collection) where T : Object
     {
         return collection.Where(entry => entry);
-    }
-
-    public static void MovePosition(this Transform t, Vector3 newPosition)
-    {
-        if (t.TryGetComponent(out Rigidbody2D rb))
-        {
-            rb.MovePosition(newPosition);
-        }
-        else
-        {
-            t.position = newPosition;
-        }
     }
 }

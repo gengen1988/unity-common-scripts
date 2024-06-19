@@ -1,5 +1,6 @@
 using UnityEngine;
 
+[RequireComponent(typeof(DebugMovement))]
 public class DebugPlayerControl : MonoBehaviour
 {
     public float Speed = 5f;
