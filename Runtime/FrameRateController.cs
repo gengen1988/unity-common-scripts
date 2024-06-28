@@ -2,10 +2,10 @@ using UnityEngine;
 
 public class FrameRateController : MonoBehaviour
 {
-    const float UPDATE_INTERVAL = 0.2f;
+    private const float UPDATE_INTERVAL = 0.2f;
 
     [Range(30f, 120f)]
-    public int FPS = 60;
+    public int TargetFPS = 60;
 
     private int _elapsedFrames;
     private float _elapsedTime;
@@ -18,9 +18,9 @@ public class FrameRateController : MonoBehaviour
 
     public void Update()
     {
-        if (Application.targetFrameRate != FPS)
+        if (Application.targetFrameRate != TargetFPS)
         {
-            Application.targetFrameRate = FPS;
+            Application.targetFrameRate = TargetFPS;
         }
 
         if (_elapsedTime >= UPDATE_INTERVAL)

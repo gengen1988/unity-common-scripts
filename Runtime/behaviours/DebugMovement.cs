@@ -2,8 +2,8 @@ using UnityEngine;
 
 public class DebugMovement : MonoBehaviour
 {
+    private Quaternion _rotation;
     private Vector2 _velocity;
-    private Vector2 _force;
     private Rigidbody2D _rb;
 
     private void Awake()
@@ -13,37 +13,26 @@ public class DebugMovement : MonoBehaviour
 
     private void Update()
     {
-        if (_rb)
+        if (!_rb)
         {
-            return;
+            Transform trans = transform;
+            trans.Translate(_velocity * Time.deltaTime);
+            trans.rotation = _rotation;
         }
-
-        transform.Translate(_velocity * Time.deltaTime);
     }
 
     private void FixedUpdate()
     {
-        if (!_rb)
+        if (_rb && _rb.isKinematic)
         {
-            return;
+            // calc
+            Vector2 displacement = _velocity * Time.deltaTime;
+
+            // apply
+            _rb.MoveRotation(_rotation);
+            _rb.MovePosition(_rb.position + displacement);
+            _rb.velocity = _velocity;
         }
-
-        if (!_rb.isKinematic)
-        {
-            return;
-        }
-
-        // calc
-        Vector2 forceToBeApply = _force * Time.deltaTime;
-        Vector2 displacement = _velocity * Time.deltaTime;
-
-        // apply
-        _rb.velocity = _velocity;
-        _rb.MovePosition(_rb.position + displacement);
-        _velocity += forceToBeApply;
-
-        // cleanup
-        _force = Vector2.zero;
     }
 
     public void SetVelocity(Vector2 velocity)
@@ -55,12 +44,20 @@ public class DebugMovement : MonoBehaviour
         }
     }
 
-    public void AddForce(Vector2 force)
+    public void SetRotation(Quaternion rotation)
     {
-        _force += force;
+        _rotation = rotation;
+    }
+
+    public Vector2 GetPosition()
+    {
         if (_rb)
         {
-            _rb.AddForce(force);
+            return _rb.position;
+        }
+        else
+        {
+            return transform.position;
         }
     }
 }

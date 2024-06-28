@@ -2,18 +2,18 @@
 using System.Linq;
 
 /**
- * similar with ILookup but can add after construct
+ * similar to ILookup but can add after construct
  */
 public class DictionaryList<TKey, TValue>
 {
     private readonly Dictionary<TKey, List<TValue>> _dic = new();
 
     public IEnumerable<TKey> Keys => _dic.Keys;
-    public IEnumerable<TValue> Values => _dic.Values.SelectMany(valueSet => valueSet);
+    public IEnumerable<List<TValue>> Values => _dic.Values;
 
     public List<TValue> this[TKey key]
     {
-        get => _dic[key];
+        get => _dic.GetValueOrDefault(key);
         set => _dic[key] = value;
     }
 

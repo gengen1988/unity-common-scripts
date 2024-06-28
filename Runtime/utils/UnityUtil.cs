@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -119,9 +118,7 @@ public static class UnityUtil
         Debug.LogError($"{typeof(T)} not found on {root}", root);
     }
 
-    public static void EnsureComponentInParent<T>(
-        this GameObject searchFrom,
-        ref T component) where T : Component
+    public static void EnsureComponentInParent<T>(this GameObject searchFrom, ref T component) where T : Component
     {
         if (!searchFrom)
         {
@@ -142,25 +139,6 @@ public static class UnityUtil
         }
 
         Debug.LogError($"{typeof(T)} not found above {searchFrom}", searchFrom);
-    }
-
-    public static IEnumerable<T> GetComponentsInChildrenDirectly<T>(this Component root, bool includeInactive = false)
-    {
-        Type rootType = root.GetType();
-        T[] allComponents = root.GetComponentsInChildren<T>(includeInactive);
-        foreach (T component in allComponents)
-        {
-            if (component is not Component unityComponent)
-            {
-                continue;
-            }
-
-            Component belongsTo = unityComponent.GetComponentInParent(rootType);
-            if (belongsTo == root)
-            {
-                yield return component;
-            }
-        }
     }
 
     /**
@@ -236,5 +214,28 @@ public static class UnityUtil
     public static IEnumerable<T> WithExists<T>(this IEnumerable<T> collection) where T : Object
     {
         return collection.Where(entry => entry);
+    }
+
+    public static IEnumerable<Collider2D> FindSiblingNearby(
+        Transform self,
+        float radius,
+        ContactFilter2D contactFilter,
+        List<Collider2D> buffer)
+    {
+        Vector2 searchOrigin = self.position;
+        Physics2D.OverlapCircle(searchOrigin, radius, contactFilter, buffer);
+        return buffer
+            .Where(found => IsSibling(self, found.transform))
+            .OrderBy(col => (col.ClosestPoint(searchOrigin) - searchOrigin).sqrMagnitude);
+    }
+
+    public static bool IsSibling(Transform trans1, Transform trans2)
+    {
+        if (!trans1 || !trans2)
+        {
+            return false;
+        }
+
+        return !trans1.IsChildOf(trans2) && !trans2.IsChildOf(trans1);
     }
 }

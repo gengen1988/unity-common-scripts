@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -185,7 +184,7 @@ public static class MathUtil
             case T[] array:
                 return CenterOfMassArray(array, selector);
             default:
-                // this has allocation memory for IEnumerable
+                // this has gc alloc for IEnumerable
                 return CenterOfMassGeneric(points, selector);
         }
     }

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class SinMovement : MonoBehaviour, IMovement
+public class SinMove : MonoBehaviour, IMoveHandler
 {
     public float Amplitude = 5;
     public float Period = 2f;
@@ -8,21 +8,14 @@ public class SinMovement : MonoBehaviour, IMovement
     public float Angle;
 
     private float _elapsedTime;
-    private BlendMovement _blend;
 
-    private void Awake()
-    {
-        _blend = GetComponentInParent<BlendMovement>();
-    }
-
-    public void Tick(float deltaTime)
+    public void OnMove(IMoveSubject subject, float deltaTime)
     {
         float phase = PhaseOctave * Mathf.PI * 2;
         Vector3 localDisplacement = CalculateDisplacement(_elapsedTime, deltaTime, phase);
-        Quaternion rotation = MathUtil.QuaternionByAngle(Angle) * _blend.GetRotation();
+        Quaternion rotation = MathUtil.QuaternionByAngle(Angle) * subject.GetRotation();
         Vector3 displacement = rotation * localDisplacement;
-        Vector3 position = _blend.GetPosition();
-        _blend.MovePosition(position + displacement);
+        subject.MovePositionDelta(displacement);
         _elapsedTime = MathUtil.Mod(_elapsedTime + deltaTime, Period);
     }
 
