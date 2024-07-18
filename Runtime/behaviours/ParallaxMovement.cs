@@ -1,5 +1,8 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
+/*
+[Obsolete]
 [DefaultExecutionOrder(50)]
 public class ParallaxMovement : MonoBehaviour
 {
@@ -40,3 +43,4 @@ public class ParallaxMovement : MonoBehaviour
         rb.MovePosition(targetPosition + scaledDisplacement);
     }
 }
+*/

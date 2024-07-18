@@ -172,4 +172,80 @@ public static class CollectionUtil
         // no solution
         return -1;
     }
+
+    public static void SortBy<T>(this IList<T> collection, Func<T, IComparable> orderBy)
+    {
+        if (collection == null)
+        {
+            throw new ArgumentNullException();
+        }
+
+        if (collection is List<T> list)
+        {
+            list.Sort(Comparison);
+        }
+        else if (collection is T[] array)
+        {
+            Array.Sort(array, Comparison);
+        }
+        else
+        {
+            throw new ArgumentException("only support list or array", nameof(collection));
+        }
+
+        return;
+
+        int Comparison(T a, T b)
+        {
+            IComparable valueA = orderBy(a);
+            IComparable valueB = orderBy(b);
+            return valueA.CompareTo(valueB);
+        }
+    }
+
+    public static int FindMinIndexBy<T>(this IList<T> collection, Func<T, IComparable> orderBy)
+    {
+        if (collection == null || collection.Count == 0)
+        {
+            throw new ArgumentException("Collection cannot be null or empty", nameof(collection));
+        }
+
+        int index = 0;
+        IComparable value = orderBy(collection[0]);
+        for (int i = 1; i < collection.Count; ++i)
+        {
+            T item = collection[i];
+            IComparable newValue = orderBy(item);
+            if (newValue.CompareTo(value) < 0)
+            {
+                index = i;
+                value = newValue;
+            }
+        }
+
+        return index;
+    }
+
+    public static int FindMaxIndexBy<T>(this IList<T> collection, Func<T, IComparable> orderBy)
+    {
+        if (collection == null || collection.Count == 0)
+        {
+            throw new ArgumentException("Collection cannot be null or empty", nameof(collection));
+        }
+
+        int index = 0;
+        IComparable value = orderBy(collection[0]);
+        for (int i = 1; i < collection.Count; ++i)
+        {
+            T item = collection[i];
+            IComparable newValue = orderBy(item);
+            if (newValue.CompareTo(value) > 0)
+            {
+                index = i;
+                value = newValue;
+            }
+        }
+
+        return index;
+    }
 }

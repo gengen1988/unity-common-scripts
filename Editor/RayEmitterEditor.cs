@@ -1,6 +1,9 @@
-﻿using UnityEditor;
+﻿using System;
+using UnityEditor;
 using UnityEngine;
 
+/*
+[Obsolete]
 [CustomEditor(typeof(RayEmitter))]
 public class RayEmitterEditor : Editor
 {
@@ -24,3 +27,4 @@ public class RayEmitterEditor : Editor
         }
     }
 }
+*/

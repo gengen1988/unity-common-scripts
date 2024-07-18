@@ -8,7 +8,7 @@ using UnityEngine;
 using UnityEngine.Assertions;
 using Object = UnityEngine.Object;
 
-public static class AssetDatabaseUtil
+public static class AssetUtil
 {
     public static void MoveAssetToFolder(Object asset, string targetFolder)
     {
@@ -21,6 +21,12 @@ public static class AssetDatabaseUtil
         string oldPath = AssetDatabase.GetAssetPath(asset);
         string fileName = Path.GetFileName(oldPath);
         string newPath = Path.Combine(targetFolder, fileName);
+
+        if (!Directory.Exists(targetFolder))
+        {
+            Directory.CreateDirectory(targetFolder);
+        }
+
         Debug.Log($"move {oldPath} to {newPath}");
         AssetDatabase.MoveAsset(oldPath, newPath);
     }

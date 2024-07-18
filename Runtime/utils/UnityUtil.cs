@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -111,7 +112,18 @@ public static class UnityUtil
 
         if (addIfNotExists)
         {
-            component = root.AddComponent<T>();
+            if (Application.isPlaying)
+            {
+                component = root.AddComponent<T>();
+            }
+            else
+            {
+                // this method may provide more detailed exception instead of fail silence,
+                // such as instantiate an abstract class.
+                // note: in unity editor namespace
+                component = ObjectFactory.AddComponent<T>(root);
+            }
+
             return;
         }
 
@@ -139,6 +151,38 @@ public static class UnityUtil
         }
 
         Debug.LogError($"{typeof(T)} not found above {searchFrom}", searchFrom);
+    }
+
+    public static void FindAttachedComponents<TManager, THandler>(
+        TManager manager,
+        List<THandler> result,
+        bool includeInactive = false)
+        where TManager : Behaviour
+    {
+        // 之所以用外部传入的 list，是因为这样可以在调用的时候不写类型
+        result.Clear();
+
+        if (!manager.isActiveAndEnabled && !includeInactive)
+        {
+            return;
+        }
+
+        THandler[] children = manager.GetComponentsInChildren<THandler>(includeInactive);
+        foreach (THandler child in children)
+        {
+            if (child is not Component unityComponent)
+            {
+                continue;
+            }
+
+            Component belongsTo = unityComponent.GetComponentInParent<TManager>(includeInactive);
+            if (belongsTo != manager)
+            {
+                continue;
+            }
+
+            result.Add(child);
+        }
     }
 
     /**
@@ -211,24 +255,32 @@ public static class UnityUtil
         return outerRect.Contains(innerRect.min) && outerRect.Contains(innerRect.max);
     }
 
-    public static IEnumerable<T> WithExists<T>(this IEnumerable<T> collection) where T : Object
+    public static IEnumerable<T> WithAlive<T>(this IEnumerable<T> collection) where T : Object
     {
-        return collection.Where(entry => entry);
+        return collection.Where(entry =>
+        {
+            return entry switch
+            {
+                GameObject go => PoolWrapper.IsAlive(go),
+                Component component => PoolWrapper.IsAlive(component),
+                _ => entry
+            };
+        });
     }
 
-    public static IEnumerable<Collider2D> FindSiblingNearby(
-        Transform self,
-        float radius,
-        ContactFilter2D contactFilter,
-        List<Collider2D> buffer)
-    {
-        Vector2 searchOrigin = self.position;
-        Physics2D.OverlapCircle(searchOrigin, radius, contactFilter, buffer);
-        return buffer
-            .Where(found => IsSibling(self, found.transform))
-            .OrderBy(col => (col.ClosestPoint(searchOrigin) - searchOrigin).sqrMagnitude);
-    }
-
+    // public static IEnumerable<Collider2D> FindSiblingNearby(
+    //     Transform self,
+    //     float radius,
+    //     ContactFilter2D contactFilter,
+    //     List<Collider2D> buffer)
+    // {
+    //     Vector2 searchOrigin = self.position;
+    //     Physics2D.OverlapCircle(searchOrigin, radius, contactFilter, buffer);
+    //     return buffer
+    //         .Where(found => IsSibling(self, found.transform))
+    //         .OrderBy(found => (found.ClosestPoint(searchOrigin) - searchOrigin).sqrMagnitude);
+    // }
+    //
     public static bool IsSibling(Transform trans1, Transform trans2)
     {
         if (!trans1 || !trans2)

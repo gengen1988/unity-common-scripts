@@ -7,8 +7,7 @@ public class LinearMove : MonoBehaviour, IMoveHandler
     public void OnMove(IMoveSubject subject, float deltaTime)
     {
         Quaternion rotation = subject.GetRotation();
-        Vector2 velocity = rotation * Vector3.right * Speed;
-        Vector2 displacement = velocity * deltaTime;
+        Vector2 displacement = rotation * Vector3.right * (Speed * deltaTime);
         subject.MovePositionDelta(displacement);
     }
 }

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-[DefaultExecutionOrder(1)]
+[DefaultExecutionOrder(3)]
 public class BlendableMovementLate : BlendableMovementBase
 {
 }

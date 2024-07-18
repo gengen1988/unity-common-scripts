@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public static class Kinematic
+public static class KinematicUtil
 {
     /**
      * 在某一方向上，能达到最远距离的发射角 (重力作用下)
@@ -87,16 +87,21 @@ public static class Kinematic
      */
     public static Vector3 Displacement(Vector3 velocity, Vector3 acceleration, float time)
     {
-        return velocity * time + acceleration * (.5f * time * time);
+        // v0 * t + 0.5 * a * t * t
+        return time * (velocity + .5f * time * acceleration);
     }
 
     /**
-     * 命中匀速移动物体所需方向
+     * 命中匀速移动物体所需速度
      */
-    public static bool InterceptVector(Vector3 los, Vector3 targetVelocity, float interceptSpeed, out Vector3 predict)
+    public static bool InterceptTime(
+        Vector3 los,
+        Vector3 targetVelocity,
+        float projectileSpeed,
+        out float collisionTime)
     {
-        predict = Vector3.zero;
-        float a = targetVelocity.sqrMagnitude - interceptSpeed * interceptSpeed;
+        collisionTime = default;
+        float a = targetVelocity.sqrMagnitude - projectileSpeed * projectileSpeed;
         float b = 2f * Vector3.Dot(targetVelocity, los);
         float c = los.sqrMagnitude;
 
@@ -112,14 +117,20 @@ public static class Kinematic
             return false;
         }
 
-        // determine short way
-        if (t2 < t1)
+        // determine the shorter time
+        if (t1 < 0)
         {
-            (t1, t2) = (t2, t1);
+            collisionTime = t2;
+        }
+        else if (t2 < 0)
+        {
+            collisionTime = t1;
+        }
+        else
+        {
+            collisionTime = Mathf.Min(t1, t2);
         }
 
-        float time = t1 < 0 ? t2 : t1;
-        predict = los + targetVelocity * time;
         return true;
     }
 }

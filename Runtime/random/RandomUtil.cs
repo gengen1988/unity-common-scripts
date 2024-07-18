@@ -92,15 +92,17 @@ public static class RandomUtil
     {
         float angle = Random.Range(0f, 360f);
         float length = Random.Range(inner, outer);
-        return MathUtil.VectorByAngle(angle) * length;
+        float rad = angle * Mathf.Deg2Rad;
+        Vector2 dir = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
+        return dir * length;
     }
 
-    public static Quaternion Rotation(float angleRange)
+    public static Quaternion Rotate(float angleRange)
     {
         float half = angleRange / 2;
-        float r = BatesSample();
-        float angle = MathUtil.RemapFrom01(r, -half, half);
-        Quaternion rotation = MathUtil.QuaternionByAngle(angle);
+        float r = BatesSample(3);
+        float angle = Mathf.Lerp(-half, half, r);
+        Quaternion rotation = Quaternion.Euler(0, 0, angle);
         return rotation;
     }
 

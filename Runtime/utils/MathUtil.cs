@@ -233,28 +233,28 @@ public static class MathUtil
     }
 
     /**
-     * resolve axx + bx + c = 0
+     * solve axx + bx + c = 0
      */
     public static int Quadratic(float a, float b, float c, out float solution1, out float solution2)
     {
-        float amount = b * b - 4 * a * c;
+        float toBeSqrt = b * b - 4 * a * c;
 
         // one solution
-        if (Mathf.Approximately(amount, 0))
+        if (Mathf.Approximately(toBeSqrt, 0))
         {
             solution1 = solution2 = -.5f * b / a;
             return 1;
         }
 
         // no solution
-        if (amount < 0)
+        if (toBeSqrt < 0)
         {
             solution1 = solution2 = float.NaN;
             return 0;
         }
 
         // two solutions
-        float root = Mathf.Sqrt(amount);
+        float root = Mathf.Sqrt(toBeSqrt);
         solution1 = (-b + root) / (2 * a);
         solution2 = (-b - root) / (2 * a);
         return 2;
@@ -403,14 +403,35 @@ public static class MathUtil
         }
     }
 
-    public static Vector3 VectorSubtractClamp(Vector3 vector, float magnitude)
+    public static Vector3 ChangeVectorMagnitude(
+        Vector3 vector,
+        float delta,
+        float min = 0f,
+        float max = float.PositiveInfinity)
     {
-        return vector.normalized * Mathf.Max(vector.magnitude - magnitude, 0f);
+        float newMagnitude = vector.magnitude + delta;
+        float clamped = Mathf.Clamp(newMagnitude, min, max);
+        return vector.normalized * clamped;
     }
 
-    public static Vector2 Rotate(Vector2 vector, float degrees)
+    public static float ChangeValueAbs(
+        float value,
+        float delta,
+        float min = 0f,
+        float max = float.PositiveInfinity)
     {
-        return QuaternionByAngle(degrees) * vector;
+        float abs = Mathf.Abs(value);
+        float sign = Mathf.Sign(value);
+        float clamped = Mathf.Clamp(abs + delta, min, max);
+        return sign * clamped;
+    }
+
+    /**
+     * positive values are counter-clockwise
+     */
+    public static Vector2 Rotate(Vector2 vector, float degree)
+    {
+        return Quaternion.Euler(0, 0, degree) * vector;
     }
 
     public static bool IsNaN(Vector2 vector)
@@ -514,5 +535,10 @@ public static class MathUtil
             a = 0;
             b = sum;
         }
+    }
+
+    public static void WeightedSum()
+    {
+        throw new NotImplementedException();
     }
 }
