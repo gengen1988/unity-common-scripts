@@ -21,7 +21,11 @@ public interface IMoveSubject
     Vector2 GetVelocity();
     void MovePositionDelta(Vector2 deltaPosition);
     void MoveRotationDelta(Quaternion deltaRotation);
+    void ResetVelocity();
+}
 
-    void MoveKinematic(Vector2 velocity, Vector2 acceleration, float deltaTime);
-    // Rigidbody2D GetRigidbody();
+public interface IManagedMovement
+{
+    void Tick(float deltaTime);
+    void Commit();
 }

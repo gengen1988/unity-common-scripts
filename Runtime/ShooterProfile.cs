@@ -22,4 +22,9 @@ public class ShooterProfile : ScriptableObject
     public float IntervalInBurst = 0.1f;
     public float CooldownBetweenBurst = 0.2f;
     public float Spread = 10;
+
+    [Header("Movement")]
+    public float Acceleration;
+    public float MinSpeed;
+    public float MaxSpeed = 100f;
 }

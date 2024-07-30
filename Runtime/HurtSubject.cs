@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 /**
  * 作为标志和事件触发器
@@ -8,11 +7,11 @@ public class HurtSubject : MonoBehaviour
 {
     public int Priority; // 一个 hit subject 在同一帧命中多个 hurt subject 时，决定优先命中哪个。越小越先命中
 
-    private readonly List<IHurtHandler> _handlers = new();
+    private IHurtHandler[] _handlers;
 
     private void Awake()
     {
-        UnityUtil.FindAttachedComponents(this, _handlers);
+        _handlers = this.GetAttachedComponents<IHurtHandler>();
     }
 
     public void TriggerHurtEvent(HitSubject hitSubject, HurtSubject hurtSubject, CollisionEventData evtData)

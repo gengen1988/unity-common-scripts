@@ -1,17 +1,20 @@
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
-public class Projectile : MonoBehaviour, IHitHandler
+public class Projectile : MonoBehaviour, IHitHandler, IMoveHandler
 {
     private float _elapsedTime;
+    private Vector2 _launchVelocity;
+
     private HitSubject _hitSubject;
-    private VFXManager _vfxMgr;
     private IFFTransponder _transponder;
-    private BlendableMovementBase _movement;
+    private BlendableMovement _movement;
+
     private ShooterProfile _profile;
+    private VFXCtrl _trail;
 
     private void Awake()
     {
-        _vfxMgr = SystemManager.GetSystem<VFXManager>();
         TryGetComponent(out _transponder);
         TryGetComponent(out _movement);
         Debug.Assert(_movement);
@@ -41,51 +44,66 @@ public class Projectile : MonoBehaviour, IHitHandler
         IFFTransponder hurtTransponder = hurtSubject.GetComponentInParent<IFFTransponder>();
         if (hurtTransponder && !hurtTransponder.IsFoe(_transponder))
         {
-            HitHurtSystem sys = SystemManager.GetSystem<HitHurtSystem>();
-            sys.BypassCurrentHit();
+            hitSubject.BypassCurrentHit();
             return;
         }
 
         Quaternion rotation = MathUtil.QuaternionByVector(evtData.HitVelocity);
-        _vfxMgr.SpawnIfExists(_profile.VFXImpact, evtData.ContactPoint, rotation);
-        AudioWrapper.PlayOneShotIfExists(_profile.SFXImpact);
+        VFXWrapper.Spawn(_profile.VFXImpact, evtData.ContactPoint, rotation);
+        AudioWrapper.PlayOneShot(_profile.SFXImpact);
         Die();
+    }
+
+    public void OnMove(IMoveSubject subject, float deltaTime)
+    {
+        if (Mathf.Approximately(_profile.Acceleration, 0))
+        {
+            subject.MovePositionDelta(_launchVelocity * deltaTime);
+        }
+        else
+        {
+            Vector2 direction = _launchVelocity.normalized;
+            float currentSpeed = _launchVelocity.magnitude;
+            float deltaSpeed = _profile.Acceleration * deltaTime;
+            float nextSpeed = currentSpeed + deltaSpeed;
+            float clamped = Mathf.Clamp(nextSpeed, _profile.MinSpeed, _profile.MaxSpeed);
+            Vector2 correctedDeltaSpeed = (clamped - currentSpeed) * direction;
+            Vector2 correctedAcceleration = correctedDeltaSpeed / deltaTime;
+            Vector2 displacement = KinematicUtil.Displacement(_launchVelocity, correctedAcceleration, deltaTime);
+            subject.MovePositionDelta(displacement);
+            _launchVelocity += correctedDeltaSpeed;
+        }
     }
 
     private void Die()
     {
+        if (_trail)
+        {
+            _trail.Finish();
+        }
+
         PoolWrapper.Despawn(gameObject);
     }
 
-    public void LaunchedBy(Shooter source)
+    public void Init(Shooter source, Vector2 velocity)
     {
-        // 不能记录 source。比方说有时可能 source 先死掉，然后 source 发射的子弹才命中敌人
-        _profile = source.Profile;
-        Transform self = transform;
-        Unit unit = source.GetComponentInParent<Unit>(); // 这里是对应 multipart 的写法
-        Debug.Assert(unit, "the shooter should be an actor (or under a actor if it is a turret)", source);
-
-        // reset timer
+        // init self
         _elapsedTime = 0;
+        _profile = source.Profile; // 不能记录 source。比方说有时可能 source 先死掉，然后 source 发射的子弹才命中敌人
+        _launchVelocity = velocity;
 
         // init iff
+        Unit unit = source.GetComponentInParent<Unit>(); // 这里是对应 multipart 的写法
+        Debug.Assert(unit, "the shooter should be an actor (or under a actor if it is a turret)", source);
         if (_transponder && unit.TryGetComponent(out IFFTransponder sourceTransponder))
         {
             _transponder.Identity = sourceTransponder.Identity;
         }
 
-        // init motion
-        unit.TryGetComponent(out BlendableMovementBase sourceMovement);
-        ArcadeMove arcade = _movement.GetMovement<ArcadeMove>();
-        Vector2 sourceVelocity = _profile.InheritVelocity && sourceMovement
-            ? sourceMovement.GetVelocity()
-            : Vector2.zero;
-        Vector2 projectileVelocity = sourceVelocity + (Vector2)self.right * _profile.LaunchSpeed;
-        arcade.SetVelocity(projectileVelocity);
-
         // effects
-        _vfxMgr.SpawnIfExists(_profile.VFXMuzzle, self.position, self.rotation);
-        _vfxMgr.SpawnIfExists(_profile.VFXTrail, self);
-        AudioWrapper.PlayOneShotIfExists(_profile.SFXMuzzle);
+        Transform self = transform;
+        AudioWrapper.PlayOneShot(_profile.SFXMuzzle);
+        VFXWrapper.Spawn(_profile.VFXMuzzle, self.position, self.rotation);
+        _trail = VFXWrapper.Spawn(_profile.VFXTrail, self);
     }
 }

@@ -248,4 +248,19 @@ public static class CollectionUtil
 
         return index;
     }
+
+    public static int RemoveAll<T>(this LinkedList<T> list, Predicate<T> match)
+    {
+        int count = 0;
+        foreach (T e in list)
+        {
+            if (match(e))
+            {
+                list.Remove(e);
+                count++;
+            }
+        }
+
+        return count;
+    }
 }

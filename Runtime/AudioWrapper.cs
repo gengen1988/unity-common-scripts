@@ -2,7 +2,7 @@
 
 public static class AudioWrapper
 {
-    public static void PlayOneShotIfExists(EventReference audioEvent)
+    public static void PlayOneShot(EventReference audioEvent)
     {
         if (!audioEvent.IsNull)
         {

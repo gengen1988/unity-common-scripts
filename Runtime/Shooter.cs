@@ -9,12 +9,13 @@ public class Shooter : MonoBehaviour
     public Transform LaunchTransform;
     public float LaunchWidth;
     public int GunAmount = 1;
-    public float DelayAtStart;
 
     private int _currentGunIndex = -1;
     private float _cooling;
     private int _burstRemaining;
+
     private IFFTransponder _transponder;
+    private BlendableMovement _movement;
 
     public bool IsFiring => _burstRemaining > 0;
 
@@ -54,9 +55,17 @@ public class Shooter : MonoBehaviour
         }
     }
 
+    private void Awake()
+    {
+        _movement = GetComponentInParent<BlendableMovement>();
+    }
+
     private void OnEnable()
     {
-        _cooling = DelayAtStart;
+        // pooling
+        _currentGunIndex = -1;
+        _burstRemaining = 0;
+        _cooling = 0;
     }
 
     private void FixedUpdate()
@@ -70,7 +79,7 @@ public class Shooter : MonoBehaviour
         {
             if (_cooling <= 0)
             {
-                DoShoot();
+                ExecuteShoot();
                 _burstRemaining--;
                 if (_burstRemaining > 0)
                 {
@@ -89,7 +98,7 @@ public class Shooter : MonoBehaviour
         }
     }
 
-    public void Shoot()
+    public void Fire()
     {
         if (_burstRemaining > 0 || _cooling > 0)
         {
@@ -99,7 +108,7 @@ public class Shooter : MonoBehaviour
         _burstRemaining = Profile.Burst;
     }
 
-    private void DoShoot()
+    private void ExecuteShoot()
     {
         // calc launch offset and spread
         Quaternion referenceRotation = LaunchTransform.rotation;
@@ -120,7 +129,13 @@ public class Shooter : MonoBehaviour
         // init projectile
         go.TryGetComponent(out Projectile projectile);
         Debug.Assert(projectile, "shot should has a Projectile", Profile.Projectile);
-        projectile.LaunchedBy(this);
+        Vector2 launchVelocity = launchRotation * Vector3.right * Profile.LaunchSpeed;
+        if (Profile.InheritVelocity && _movement)
+        {
+            launchVelocity += _movement.GetVelocity();
+        }
+
+        projectile.Init(this, launchVelocity);
     }
 
     public Quaternion GetLaunchRotation()
@@ -131,5 +146,36 @@ public class Shooter : MonoBehaviour
     public Vector2 GetLaunchPosition()
     {
         return LaunchTransform.position;
+    }
+
+    public bool Predict(Vector2 targetPosition, Vector2 targetVelocity, out Vector2 predictLos)
+    {
+        Vector2 launchPosition = GetLaunchPosition();
+        Vector2 los = targetPosition - launchPosition;
+
+        // self movement correction
+        Vector2 correctedVelocity = targetVelocity;
+        if (Profile.InheritVelocity && _movement)
+        {
+            correctedVelocity -= _movement.GetVelocity();
+        }
+
+        // predict
+        if (!KinematicUtil.InterceptTime(los, correctedVelocity, Profile.LaunchSpeed, out float time))
+        {
+            predictLos = los;
+            return false;
+        }
+
+        predictLos = los + targetVelocity * time;
+        return true;
+    }
+
+    public bool IsAimed(Vector2 los, float tolerance)
+    {
+        Quaternion currentRotation = GetLaunchRotation();
+        Vector2 fov = currentRotation * Vector3.up;
+        float projection = Vector2.Dot(los, fov);
+        return Mathf.Abs(projection) <= tolerance;
     }
 }

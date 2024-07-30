@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 /**
@@ -7,13 +8,40 @@ using UnityEngine;
 public class HitSubject : MonoBehaviour
 {
     public float HitInterval = 0.1f;
+    public bool Penetrating;
 
-    private readonly List<IHitHandler> _handlers = new();
+    private bool _bypassHit;
+    private bool _allowBypass;
+    private float _coolingTime;
+
+    private HitManager _manager;
+    private IHitHandler[] _handlers;
+
     private readonly List<ContactPoint2D> _contactBuffer = new();
+    private readonly List<HurtSubject> _hurtSubjectBuffer = new(); // for sort
+    private readonly DictionaryList<HurtSubject, CollisionEventData> _eventsByHurtSubject = new();
 
     private void Awake()
     {
-        UnityUtil.FindAttachedComponents(this, _handlers);
+        _handlers = this.GetAttachedComponents<IHitHandler>();
+    }
+
+    private void OnEnable()
+    {
+        // reset for pooling
+        _coolingTime = 0;
+
+        // register to system
+        _manager = SystemManager.GetSystem<HitManager>();
+        _manager.RegisterSubject(this);
+    }
+
+    private void OnDisable()
+    {
+        if (_manager)
+        {
+            _manager.RemoveSubject(this);
+        }
     }
 
     private void OnCollisionEnter2D(Collision2D other)
@@ -29,8 +57,7 @@ public class HitSubject : MonoBehaviour
     private void EnqueueCollisionEvent(Collision2D other)
     {
         // cooling optimize
-        HitHurtSystem system = SystemManager.GetSystem<HitHurtSystem>();
-        if (system.IsCooling(this))
+        if (_coolingTime > 0)
         {
             return;
         }
@@ -43,15 +70,17 @@ public class HitSubject : MonoBehaviour
 
         // calculate contact point
         other.GetContacts(_contactBuffer);
-        Vector2 hitPosition = _contactBuffer.CenterOfMass(contact => contact.point);
+        Vector2 contactPoint = _contactBuffer.CenterOfMass(contact => contact.point);
 
-        // leave hit system processing
+        // leave hit manager processing
         CollisionEventData evtData = new()
         {
-            ContactPoint = hitPosition,
+            HitStamp = PoolWrapper.GetStamp(this),
+            HurtStamp = PoolWrapper.GetStamp(hurtSubject),
+            ContactPoint = contactPoint,
             HitVelocity = -other.relativeVelocity,
         };
-        system.EnqueueCollisionEvent(this, hurtSubject, evtData);
+        _eventsByHurtSubject.Add(hurtSubject, evtData);
     }
 
     private bool TryGetHurtSubject(Collider2D from, out HurtSubject subject)
@@ -66,7 +95,7 @@ public class HitSubject : MonoBehaviour
         return from.TryGetComponent(out subject);
     }
 
-    public void TriggerHitEvent(HitSubject hitSubject, HurtSubject hurtSubject, CollisionEventData evtData)
+    private void TriggerHitEvent(HitSubject hitSubject, HurtSubject hurtSubject, CollisionEventData evtData)
     {
         foreach (IHitHandler handler in _handlers)
         {
@@ -82,5 +111,87 @@ public class HitSubject : MonoBehaviour
 
             handler.OnHit(hitSubject, hurtSubject, evtData);
         }
+    }
+
+    public void BypassCurrentHit()
+    {
+        if (!_allowBypass)
+        {
+            throw new InvalidOperationException("can't bypass in this timing");
+        }
+
+        _bypassHit = true;
+    }
+
+    public void Tick(float deltaTime)
+    {
+        if (_coolingTime > 0)
+        {
+            _coolingTime -= deltaTime;
+            return;
+        }
+
+        _hurtSubjectBuffer.Clear();
+        _hurtSubjectBuffer.AddRange(_eventsByHurtSubject.Keys);
+        if (!Penetrating)
+        {
+            _hurtSubjectBuffer.SortBy(s => s.Priority);
+        }
+
+        foreach (HurtSubject hurtSubject in _hurtSubjectBuffer)
+        {
+            LinkedList<CollisionEventData> events = _eventsByHurtSubject[hurtSubject];
+            int hitCount = 0;
+            Vector2 contactPoint = Vector2.zero;
+            Vector2 hitVelocity = Vector2.zero;
+            foreach (CollisionEventData evt in events)
+            {
+                if (!PoolWrapper.IsAlive(this, evt.HitStamp))
+                {
+                    continue;
+                }
+
+                if (!PoolWrapper.IsAlive(hurtSubject, evt.HurtStamp))
+                {
+                    continue;
+                }
+
+                contactPoint += evt.ContactPoint;
+                hitVelocity += evt.HitVelocity;
+                hitCount++;
+            }
+
+            if (hitCount == 0)
+            {
+                continue;
+            }
+
+            CollisionEventData mergedEvent = new()
+            {
+                HitStamp = PoolWrapper.GetStamp(this),
+                HurtStamp = PoolWrapper.GetStamp(hurtSubject),
+                ContactPoint = contactPoint / hitCount,
+                HitVelocity = hitVelocity / hitCount,
+            };
+
+            _bypassHit = false;
+            _allowBypass = true;
+            TriggerHitEvent(this, hurtSubject, mergedEvent);
+            _allowBypass = false;
+            if (_bypassHit)
+            {
+                continue;
+            }
+
+            hurtSubject.TriggerHurtEvent(this, hurtSubject, mergedEvent);
+            _coolingTime = HitInterval;
+
+            if (!Penetrating)
+            {
+                break;
+            }
+        }
+
+        _eventsByHurtSubject.Clear();
     }
 }

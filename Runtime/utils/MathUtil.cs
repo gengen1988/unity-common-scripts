@@ -17,6 +17,14 @@ public static class MathUtil
         return scaledValue;
     }
 
+    public static float RemapClamp(float fromValue, float fromA, float fromB, float toA, float toB)
+    {
+        float ratio = RemapTo01(fromValue, fromA, fromB);
+        float clamped = Mathf.Clamp01(ratio);
+        float scaledValue = RemapFrom01(clamped, toA, toB);
+        return scaledValue;
+    }
+
     /**
      * remap value from 0 to 1 based to other range.
      * alias of Mathf.LerpUnclamped()

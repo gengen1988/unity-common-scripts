@@ -35,7 +35,7 @@ public static class SteeringUtil
             return Seek(los, currentVelocity, maxSpeed);
         }
 
-        float ratio = Mathf.Clamp01(los.magnitude / slowDistance);
+        float ratio = Mathf.Pow(Mathf.Clamp01(los.magnitude / slowDistance), 0.5f);
         return Seek(los, currentVelocity, ratio * maxSpeed);
     }
 
@@ -51,8 +51,8 @@ public static class SteeringUtil
             return Seek(los, currentVelocity, maxSpeed);
         }
 
-        Vector3 predictVector = los + targetVelocity * time;
-        return Arrive(predictVector, currentVelocity, maxSpeed, slowDistance);
+        Vector3 predictLos = los + targetVelocity * time;
+        return Arrive(predictLos, currentVelocity, maxSpeed, slowDistance);
     }
 
     public static Vector3 Wander(

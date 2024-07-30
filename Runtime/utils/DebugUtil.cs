@@ -26,7 +26,7 @@ public static class GizmosUtil
 {
     public static void DrawWireArc2D(Vector2 center, Vector2 from, float angle, float radius)
     {
-        const int SEGMENTS = 30;
+        const int SEGMENTS = 24;
         float angleStep = angle / SEGMENTS;
         Vector2 actualFrom = from.normalized * radius;
         Vector2 previousPoint = center + actualFrom;

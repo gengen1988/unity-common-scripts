@@ -1,4 +1,4 @@
 ﻿public interface ISteeringDataProvider
 {
-    public void Refresh(Blackboard<SteeringField> ctrl);
+    public void OnPerceive(Blackboard<SteeringField> ctrl);
 }

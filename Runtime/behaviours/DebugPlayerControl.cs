@@ -43,7 +43,7 @@ public class DebugPlayerControl : MonoBehaviour
         {
             if (_shooter)
             {
-                _shooter.Shoot();
+                _shooter.Fire();
             }
             else
             {

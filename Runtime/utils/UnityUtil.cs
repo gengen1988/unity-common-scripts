@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -88,101 +89,95 @@ public static class UnityUtil
         return child;
     }
 
-    public static void EnsureComponent<T>(
-        this GameObject root,
-        ref T component,
-        bool addIfNotExists = false) where T : Component
+    public static T GetOrAddComponent<T>(this GameObject go) where T : Component
     {
-        if (!root)
+        if (!go.TryGetComponent(out T result))
         {
-            Debug.LogError("gameObject not exists");
-            return;
+#if UNITY_EDITOR
+            // this method may provide more detailed exception instead of fail silence,
+            // such as instantiate an abstract class.
+            result = ObjectFactory.AddComponent<T>(go);
+#else
+            result = go.AddComponent<T>();
+#endif
         }
 
-        if (component && component.gameObject == root)
-        {
-            return;
-        }
-
-        if (root.TryGetComponent(out T found))
-        {
-            component = found;
-            return;
-        }
-
-        if (addIfNotExists)
-        {
-            if (Application.isPlaying)
-            {
-                component = root.AddComponent<T>();
-            }
-            else
-            {
-                // this method may provide more detailed exception instead of fail silence,
-                // such as instantiate an abstract class.
-                // note: in unity editor namespace
-                component = ObjectFactory.AddComponent<T>(root);
-            }
-
-            return;
-        }
-
-        Debug.LogError($"{typeof(T)} not found on {root}", root);
+        return result;
     }
 
-    public static void EnsureComponentInParent<T>(this GameObject searchFrom, ref T component) where T : Component
+//     public static void EnsureComponent<T>(
+//         this GameObject root,
+//         ref T component,
+//         bool addIfNotExists = false) where T : Component
+//     {
+//         if (!root)
+//         {
+//             Debug.LogError("gameObject not exists");
+//             return;
+//         }
+//
+//         if (component && component.gameObject == root)
+//         {
+//             return;
+//         }
+//
+//         if (root.TryGetComponent(out T found))
+//         {
+//             component = found;
+//             return;
+//         }
+//
+//         if (addIfNotExists)
+//         {
+// #if UNITY_EDITOR
+//             // this method may provide more detailed exception instead of fail silence,
+//             // such as instantiate an abstract class.
+//             component = ObjectFactory.AddComponent<T>(root);
+// #else
+//             component = root.AddComponent<T>();
+// #endif
+//             return;
+//         }
+//
+//         Debug.LogError($"{typeof(T)} not found on {root}", root);
+//     }
+//
+//     public static void EnsureComponentInParent<T>(this GameObject searchFrom, ref T component) where T : Component
+//     {
+//         if (!searchFrom)
+//         {
+//             Debug.LogError("gameObject not exists");
+//             return;
+//         }
+//
+//         if (component && searchFrom.transform.IsChildOf(component.transform))
+//         {
+//             return;
+//         }
+//
+//         T found = searchFrom.GetComponentInParent<T>();
+//         if (found)
+//         {
+//             component = found;
+//             return;
+//         }
+//
+//         Debug.LogError($"{typeof(T)} not found above {searchFrom}", searchFrom);
+//     }
+
+    public static T[] GetAttachedComponents<T>(this Component manager, bool includeInactive = false)
     {
-        if (!searchFrom)
+        if (!manager)
         {
-            Debug.LogError("gameObject not exists");
-            return;
+            return Array.Empty<T>();
         }
 
-        if (component && searchFrom.transform.IsChildOf(component.transform))
-        {
-            return;
-        }
-
-        T found = searchFrom.GetComponentInParent<T>();
-        if (found)
-        {
-            component = found;
-            return;
-        }
-
-        Debug.LogError($"{typeof(T)} not found above {searchFrom}", searchFrom);
-    }
-
-    public static void FindAttachedComponents<TManager, THandler>(
-        TManager manager,
-        List<THandler> result,
-        bool includeInactive = false)
-        where TManager : Behaviour
-    {
-        // 之所以用外部传入的 list，是因为这样可以在调用的时候不写类型
-        result.Clear();
-
-        if (!manager.isActiveAndEnabled && !includeInactive)
-        {
-            return;
-        }
-
-        THandler[] children = manager.GetComponentsInChildren<THandler>(includeInactive);
-        foreach (THandler child in children)
-        {
-            if (child is not Component unityComponent)
-            {
-                continue;
-            }
-
-            Component belongsTo = unityComponent.GetComponentInParent<TManager>(includeInactive);
-            if (belongsTo != manager)
-            {
-                continue;
-            }
-
-            result.Add(child);
-        }
+        Type managerType = manager.GetType();
+        return manager.GetComponentsInChildren<T>(includeInactive)
+            .Cast<Component>()
+            .Where(c => manager == c.GetComponentInParent(managerType, true))
+            .Cast<T>()
+            .ToArray();
     }
 
     /**
@@ -199,7 +194,7 @@ public static class UnityUtil
         }
         else
         {
-            // 在编辑阶段里只能用 DestroyImmediate，而且 DestroyImmediate 用 foreach 会导致漏删
+            // 在编辑阶段里只能用 DestroyImmediate，而且 DestroyImmediate 用 foreach 会漏删
             while (root.childCount > 0)
             {
                 Transform target = root.GetChild(0);
@@ -221,6 +216,13 @@ public static class UnityUtil
         Vector3 currentScreenPoint = translateCamera.WorldToScreenPoint(origin);
         Vector3 newWorldPoint = translateCamera.ScreenToWorldPoint(currentScreenPoint + delta);
         return newWorldPoint;
+    }
+
+    public static Vector3 CameraRemap(Vector3 fromWorldPosition, Camera from, Camera to)
+    {
+        Vector3 screenPoint = from.WorldToScreenPoint(fromWorldPosition);
+        Vector3 remapped = to.ScreenToWorldPoint(screenPoint);
+        return remapped;
     }
 
     /**
@@ -255,18 +257,18 @@ public static class UnityUtil
         return outerRect.Contains(innerRect.min) && outerRect.Contains(innerRect.max);
     }
 
-    public static IEnumerable<T> WithAlive<T>(this IEnumerable<T> collection) where T : Object
-    {
-        return collection.Where(entry =>
-        {
-            return entry switch
-            {
-                GameObject go => PoolWrapper.IsAlive(go),
-                Component component => PoolWrapper.IsAlive(component),
-                _ => entry
-            };
-        });
-    }
+    // public static IEnumerable<T> WithAlive<T>(this IEnumerable<T> collection) where T : Object
+    // {
+    //     return collection.Where(entry =>
+    //     {
+    //         return entry switch
+    //         {
+    //             GameObject go => PoolWrapper.IsAlive(go),
+    //             Component component => PoolWrapper.IsAlive(component),
+    //             _ => entry
+    //         };
+    //     });
+    // }
 
     // public static IEnumerable<Collider2D> FindSiblingNearby(
     //     Transform self,
