@@ -3,6 +3,7 @@
 /**
  * 注意 iff 对象可能不仅限与 unit 之间。projectile 也可能参与 iff 判断
  * 也就是 iff 不一定跟着 unit
+ * 另外，iff 不能设置在子 Transform 上，需要和 rigidbody 在一个对象上
  */
 public class IFFTransponder : MonoBehaviour
 {

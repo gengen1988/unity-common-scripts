@@ -18,7 +18,6 @@ public class HitSubject : MonoBehaviour
     private IHitHandler[] _handlers;
 
     private readonly List<ContactPoint2D> _contactBuffer = new();
-    private readonly List<HurtSubject> _hurtSubjectBuffer = new(); // for sort
     private readonly DictionaryList<HurtSubject, CollisionEventData> _eventsByHurtSubject = new();
 
     private void Awake()
@@ -30,19 +29,23 @@ public class HitSubject : MonoBehaviour
     {
         // reset for pooling
         _coolingTime = 0;
+        _eventsByHurtSubject.Clear();
 
-        // register to system
-        _manager = SystemManager.GetSystem<HitManager>();
-        _manager.RegisterSubject(this);
+        // notify manager
+        IComponentManager<HitSubject>.NotifyEnabled(this);
     }
 
     private void OnDisable()
     {
-        if (_manager)
-        {
-            _manager.RemoveSubject(this);
-        }
+        IComponentManager<HitSubject>.NotifyDisabled(this);
     }
+
+#if UNITY_EDITOR
+    private void Start()
+    {
+        Debug.Assert(SystemManager.GetSystem<HitManager>());
+    }
+#endif
 
     private void OnCollisionEnter2D(Collision2D other)
     {
@@ -75,7 +78,6 @@ public class HitSubject : MonoBehaviour
         // leave hit manager processing
         CollisionEventData evtData = new()
         {
-            HitStamp = PoolWrapper.GetStamp(this),
             HurtStamp = PoolWrapper.GetStamp(hurtSubject),
             ContactPoint = contactPoint,
             HitVelocity = -other.relativeVelocity,
@@ -131,67 +133,75 @@ public class HitSubject : MonoBehaviour
             return;
         }
 
-        _hurtSubjectBuffer.Clear();
-        _hurtSubjectBuffer.AddRange(_eventsByHurtSubject.Keys);
-        if (!Penetrating)
+        if (_eventsByHurtSubject.Keys.Count == 0)
         {
-            _hurtSubjectBuffer.SortBy(s => s.Priority);
+            return;
         }
 
-        foreach (HurtSubject hurtSubject in _hurtSubjectBuffer)
+        if (Penetrating)
         {
-            LinkedList<CollisionEventData> events = _eventsByHurtSubject[hurtSubject];
-            int hitCount = 0;
-            Vector2 contactPoint = Vector2.zero;
-            Vector2 hitVelocity = Vector2.zero;
-            foreach (CollisionEventData evt in events)
+            foreach (HurtSubject hurtSubject in _eventsByHurtSubject.Keys)
             {
-                if (!PoolWrapper.IsAlive(this, evt.HitStamp))
+                TriggerEvents(this, hurtSubject);
+            }
+        }
+        else
+        {
+            HurtSubject minPriorityHurtSubject = null;
+            foreach (HurtSubject hurtSubject in _eventsByHurtSubject.Keys)
+            {
+                if (!minPriorityHurtSubject || hurtSubject.Priority < minPriorityHurtSubject.Priority)
                 {
-                    continue;
+                    minPriorityHurtSubject = hurtSubject;
                 }
-
-                if (!PoolWrapper.IsAlive(hurtSubject, evt.HurtStamp))
-                {
-                    continue;
-                }
-
-                contactPoint += evt.ContactPoint;
-                hitVelocity += evt.HitVelocity;
-                hitCount++;
             }
 
-            if (hitCount == 0)
-            {
-                continue;
-            }
-
-            CollisionEventData mergedEvent = new()
-            {
-                HitStamp = PoolWrapper.GetStamp(this),
-                HurtStamp = PoolWrapper.GetStamp(hurtSubject),
-                ContactPoint = contactPoint / hitCount,
-                HitVelocity = hitVelocity / hitCount,
-            };
-
-            _bypassHit = false;
-            _allowBypass = true;
-            TriggerHitEvent(this, hurtSubject, mergedEvent);
-            _allowBypass = false;
-            if (_bypassHit)
-            {
-                continue;
-            }
-
-            hurtSubject.TriggerHurtEvent(this, hurtSubject, mergedEvent);
-            _coolingTime = HitInterval;
-
-            if (!Penetrating)
-            {
-                break;
-            }
+            TriggerEvents(this, minPriorityHurtSubject);
         }
 
         _eventsByHurtSubject.Clear();
+    }
+
+    private void TriggerEvents(HitSubject hitSubject, HurtSubject hurtSubject)
+    {
+        LinkedList<CollisionEventData> events = _eventsByHurtSubject[hurtSubject];
+        int hitCount = 0;
+        Vector2 contactPoint = Vector2.zero;
+        Vector2 hitVelocity = Vector2.zero;
+        foreach (CollisionEventData evt in events)
+        {
+            if (!PoolWrapper.IsAlive(hurtSubject, evt.HurtStamp))
+            {
+                continue;
+            }
+
+            contactPoint += evt.ContactPoint;
+            hitVelocity += evt.HitVelocity;
+            hitCount++;
+        }
+
+        if (hitCount == 0)
+        {
+            return;
+        }
+
+        CollisionEventData mergedEvent = new()
+        {
+            HurtStamp = PoolWrapper.GetStamp(hurtSubject),
+            ContactPoint = contactPoint / hitCount,
+            HitVelocity = hitVelocity / hitCount,
+        };
+
+        _bypassHit = false;
+        _allowBypass = true;
+        TriggerHitEvent(hitSubject, hurtSubject, mergedEvent);
+        _allowBypass = false;
+        if (_bypassHit)
+        {
+            return;
+        }
+
+        hurtSubject.TriggerHurtEvent(hitSubject, hurtSubject, mergedEvent);
+        _coolingTime = HitInterval;
     }
 }

@@ -1,54 +1,78 @@
+using UnityEngine;
+
+public static class StateMachine
+{
+    public static StateMachine<TContext> CreateInstance<TContext>(TContext context)
+    {
+        return new StateMachine<TContext>(context);
+    }
+}
+
 public class StateMachine<TContext>
 {
-    public readonly TContext Context;
+    private readonly TContext _context;
 
-    private State<TContext> _currentState;
+    private IState<TContext> _previousState;
+    private IState<TContext> _currentState;
 
     public StateMachine(TContext context)
     {
-        Context = context;
+        _context = context;
     }
 
     public void Tick(float deltaTime)
     {
-        _currentState.OnTick(deltaTime);
+        Debug.Assert(_currentState != null, "current state is null");
+        _currentState?.OnTick(_context, deltaTime);
     }
 
-    public void TransitionTo<TState>() where TState : State<TContext>, new()
+    public void TransitionTo(IState<TContext> nextState)
     {
-        _currentState?.OnExit();
-        TState state = new TState();
-        state.StateMachine = this;
-        _currentState = state;
-        state.OnEnter();
+        _currentState?.OnExit(_context);
+        _previousState = _currentState;
+        _currentState = nextState;
+        nextState?.OnEnter(_context);
     }
 
-    public State<TContext> GetCurrentState()
+    public void RevertToPreviousState()
+    {
+        TransitionTo(_previousState);
+    }
+
+    public IState<TContext> GetCurrentState()
     {
         return _currentState;
     }
+
+    public void SetCurrentState(IState<TContext> state)
+    {
+        _currentState = state;
+    }
+
+    public void SetPreviousState(IState<TContext> state)
+    {
+        _previousState = state;
+    }
 }
 
-public abstract class State<TContext>
+public interface IState<in TContext>
 {
-    public StateMachine<TContext> StateMachine;
+    public void OnEnter(TContext context);
+    public void OnExit(TContext context);
+    public void OnTick(TContext context, float deltaTime);
+}
 
-    protected TContext Context => StateMachine.Context;
-
-    protected void TransitionTo<TState>() where TState : State<TContext>, new()
-    {
-        StateMachine.TransitionTo<TState>();
-    }
-
-    public virtual void OnEnter()
+public abstract class State<TState, TContext> : Singleton<TState>, IState<TContext> where TState : class, new()
+{
+    public virtual void OnEnter(TContext context)
     {
     }
 
-    public virtual void OnExit()
+    public virtual void OnExit(TContext context)
     {
     }
 
-    public virtual void OnTick(float deltaTime)
+    public virtual void OnTick(TContext context, float deltaTime)
     {
     }
 }

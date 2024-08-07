@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class SystemManager : SingletonMonoBehaviour<SystemManager>
+public class SystemManager : SingletonBehaviour<SystemManager>
 {
-    private static class SystemCache<T>
+    private static class Cache<T> where T : Component
     {
         public static T Value;
     }
 
-    private readonly Hashtable _systemByType = new();
+    private readonly Dictionary<Type, Component> _systemByType = new();
 
     public static T GetSystem<T>() where T : Component
     {
@@ -20,15 +21,20 @@ public class SystemManager : SingletonMonoBehaviour<SystemManager>
         }
 
         // cache to bypass alloc
-        T cachedValue = SystemCache<T>.Value;
+        T cachedValue = Cache<T>.Value;
         if (cachedValue)
         {
             return cachedValue;
         }
 
-        // update cache
-        T newValue = Instance.FindSystemByType<T>();
-        SystemCache<T>.Value = newValue;
+        // refresh cache
+        if (!Instance._systemByType.TryGetValue(typeof(T), out Component spawned))
+        {
+            Debug.LogError($"some one require {typeof(T)} to work");
+        }
+
+        T newValue = spawned as T;
+        Cache<T>.Value = newValue;
         return newValue;
     }
 
@@ -40,30 +46,20 @@ public class SystemManager : SingletonMonoBehaviour<SystemManager>
             return;
         }
 
-        Instance.SpawnSystem(prefab);
-    }
-
-    private T FindSystemByType<T>() where T : Component
-    {
-        Type systemType = typeof(T);
-        T result = (T)_systemByType[systemType];
-        if (!result)
+        GameObject go = Instantiate(prefab, Instance.transform);
+        MonoBehaviour[] components = go.GetComponents<MonoBehaviour>();
+        Component system = components[0];
+        Type systemType = system.GetType();
+        if (components.Length > 1)
         {
-            Debug.LogError($"some one require {nameof(T)} to work", this);
-            return null;
+            Debug.LogWarning($"only index {systemType} on {prefab}", prefab);
         }
 
-        return result;
-    }
-
-    private void SpawnSystem(GameObject prefab)
-    {
-        GameObject go = Instantiate(prefab, transform);
-        ISystem[] components = go.GetComponents<ISystem>();
-        Debug.Assert(components.Length == 1, "please consider put systems into individual prefabs", prefab);
-        ISystem system = components[0];
-        Type systemType = system.GetType();
-        Debug.Assert(!_systemByType.ContainsKey(systemType), "system should not has more than one instance", prefab);
-        _systemByType[systemType] = system;
+        Debug.Assert(
+            !Instance._systemByType.ContainsKey(systemType),
+            $"{systemType} should not has more than one instance",
+            prefab
+        );
+        Instance._systemByType[systemType] = system;
     }
 }

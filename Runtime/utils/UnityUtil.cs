@@ -175,6 +175,7 @@ public static class UnityUtil
         Type managerType = manager.GetType();
         return manager.GetComponentsInChildren<T>(includeInactive)
             .Cast<Component>()
+            .Where(c => c != manager)
             .Where(c => manager == c.GetComponentInParent(managerType, true))
             .Cast<T>()
             .ToArray();

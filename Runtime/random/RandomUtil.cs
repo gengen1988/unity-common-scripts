@@ -88,6 +88,15 @@ public static class RandomUtil
         return new Vector3(x, y, z);
     }
 
+    public static Vector3 PointInBox(float size)
+    {
+        float extents = size / 2;
+        float x = Random.Range(-extents, extents);
+        float y = Random.Range(-extents, extents);
+        float z = Random.Range(-extents, extents);
+        return new Vector3(x, y, z);
+    }
+
     public static Vector2 PointInDonut(float outer = 1f, float inner = 1f)
     {
         float angle = Random.Range(0f, 360f);

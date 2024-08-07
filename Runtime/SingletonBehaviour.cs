@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public abstract class SingletonMonoBehaviour<T> : MonoBehaviour where T : SingletonMonoBehaviour<T>
+public abstract class SingletonBehaviour<T> : MonoBehaviour where T : SingletonBehaviour<T>
 {
     private static T _instance;
 
@@ -8,7 +8,7 @@ public abstract class SingletonMonoBehaviour<T> : MonoBehaviour where T : Single
 
     private void Awake()
     {
-        Debug.Assert(Instance == null || Instance == this, $"{typeof(T).Name} has more than one instances", this);
+        Debug.Assert(_instance == null || _instance == this, $"{typeof(T)} has more than one instances", this);
         _instance = this as T;
         OnAwake();
     }

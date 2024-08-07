@@ -1,27 +1,50 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-[DefaultExecutionOrder(5000)] // after other fixed update logic (such as rb.MovePosition)
-public class HitManager : MonoBehaviour, ISystem
+public class HitManager : MonoBehaviour, IComponentManager<HitSubject>
 {
-    private readonly HashSet<HitSubject> _hitSubjects = new();
+    private readonly HashSet<HitSubject> _subjects = new();
+    private readonly List<HitSubject> _toBeTick = new();
 
-    private void FixedUpdate()
+    private void Awake()
     {
-        float deltaTime = Time.deltaTime;
-        foreach (HitSubject hitSubject in _hitSubjects)
+        IComponentManager<HitSubject>.RegisterManager(this);
+    }
+
+    private void OnDestroy()
+    {
+        IComponentManager<HitSubject>.DeregisterManager(this);
+    }
+
+    // ReSharper disable once IteratorNeverReturns
+    private IEnumerator Start()
+    {
+        for (;;)
         {
-            hitSubject.Tick(deltaTime);
+            // after physics simulation (such as OnCollisionEnter)
+            yield return new WaitForFixedUpdate();
+
+            _toBeTick.Clear();
+            _toBeTick.AddRange(_subjects);
+
+            // tick each subject
+            // be notice that hit subject may trigger OnComponentDisabled when tick
+            float deltaTime = Time.deltaTime;
+            foreach (HitSubject subject in _toBeTick)
+            {
+                subject.Tick(deltaTime);
+            }
         }
     }
 
-    public void RegisterSubject(HitSubject subject)
+    public void OnComponentEnabled(HitSubject component)
     {
-        _hitSubjects.Add(subject);
+        _subjects.Add(component);
     }
 
-    public void RemoveSubject(HitSubject subject)
+    public void OnComponentDisabled(HitSubject component)
     {
-        _hitSubjects.Remove(subject);
+        _subjects.Remove(component);
     }
 }

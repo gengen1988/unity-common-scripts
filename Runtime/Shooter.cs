@@ -2,7 +2,6 @@
 using System.Linq;
 using UnityEngine;
 
-[DefaultExecutionOrder(-100)]
 public class Shooter : MonoBehaviour
 {
     public ShooterProfile Profile;
@@ -57,6 +56,7 @@ public class Shooter : MonoBehaviour
 
     private void Awake()
     {
+        _transponder = GetComponentInParent<IFFTransponder>();
         _movement = GetComponentInParent<BlendableMovement>();
     }
 
@@ -135,7 +135,8 @@ public class Shooter : MonoBehaviour
             launchVelocity += _movement.GetVelocity();
         }
 
-        projectile.Init(this, launchVelocity);
+        string identity = _transponder ? _transponder.Identity : null;
+        projectile.Init(Profile, launchVelocity, identity);
     }
 
     public Quaternion GetLaunchRotation()

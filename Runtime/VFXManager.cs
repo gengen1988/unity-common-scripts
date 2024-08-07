@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class VFXManager : MonoBehaviour, ISystem
+public class VFXManager : MonoBehaviour
 {
     public bool DebugLog;
 

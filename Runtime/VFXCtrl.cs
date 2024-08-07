@@ -36,17 +36,8 @@ public class VFXCtrl : MonoBehaviour
 
     public void Init(Transform following, float timeout)
     {
-        if (following)
-        {
-            _isFollowing = true;
-            _followingTransform = following;
-            _followingSpawnStamp = PoolWrapper.GetStamp(following);
-        }
-        else
-        {
-            _isFollowing = false;
-        }
-
+        _followingTransform = following;
+        _followingSpawnStamp = PoolWrapper.GetStamp(following);
         _timeoutTime = timeout;
         _elapsedTime = 0f;
         _particleSystemStopped = false;
@@ -68,16 +59,9 @@ public class VFXCtrl : MonoBehaviour
         }
 
         // follow logic
-        if (_isFollowing)
+        if (PoolWrapper.IsAlive(_followingTransform, _followingSpawnStamp))
         {
-            if (PoolWrapper.IsAlive(_followingTransform, _followingSpawnStamp))
-            {
-                _selfTransform.position = _followingTransform.position;
-            }
-            // else
-            // {
-            //     Debug.LogWarning($"following died but vfx remained: {this}", this);
-            // }
+            _selfTransform.position = _followingTransform.position;
         }
     }
 

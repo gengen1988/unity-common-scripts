@@ -1,25 +1,25 @@
 ﻿using System;
-using System.Linq;
 using UnityEngine;
 
-public class BlendableMovement : MonoBehaviour, IManagedMovement, IMoveSubject
+public class BlendableMovement : MonoBehaviour
 {
     public bool DebugLog;
     public bool ConstraintByRaycast;
     public PlatformerRaycaster _raycaster;
 
     private bool _isGrounded;
-    private bool _isVelocityReset;
+    private bool _requestStop;
     private Vector2 _deltaPosition;
     private Quaternion _deltaRotation;
     private Vector2 _velocity;
+    private Vector2 _additionVelocity;
     private Vector2 _toBeApplyPosition;
     private Quaternion _toBeApplyRotation;
     private Vector2 _toBeApplyVelocity;
 
     private Rigidbody2D _rb;
     private IMoveHandler[] _handlers;
-    private MovementResolver _manager;
+    private bool _overrideVelocity;
 
     public event Action OnGrounded;
 
@@ -50,20 +50,23 @@ public class BlendableMovement : MonoBehaviour, IManagedMovement, IMoveSubject
         _deltaPosition = Vector2.zero;
         _deltaRotation = Quaternion.identity;
         _velocity = Vector2.zero;
-        _isVelocityReset = true;
 
-        // register
-        _manager = SystemManager.GetSystem<MovementResolver>();
-        _manager.RegisterSubject(this);
+        // notify manager
+        IComponentManager<BlendableMovement>.NotifyEnabled(this);
     }
 
     private void OnDisable()
     {
-        if (_manager)
-        {
-            _manager.RemoveSubject(this);
-        }
+        IComponentManager<BlendableMovement>.NotifyDisabled(this);
     }
+
+#if UNITY_EDITOR
+    private void Start()
+    {
+        // 检查是否缺少必要系统
+        Debug.Assert(SystemManager.GetSystem<MovementResolver>());
+    }
+#endif
 
     private void OnDestroy()
     {
@@ -109,7 +112,6 @@ public class BlendableMovement : MonoBehaviour, IManagedMovement, IMoveSubject
             if (_isGrounded)
             {
                 // TODO bounce
-                _isVelocityReset = true;
                 OnGrounded?.Invoke();
             }
         }
@@ -117,19 +119,12 @@ public class BlendableMovement : MonoBehaviour, IManagedMovement, IMoveSubject
         // execute move
         _toBeApplyPosition = currentPosition + displacement;
         _toBeApplyRotation = currentRotation * _deltaRotation;
-        if (_isVelocityReset)
-        {
-            _toBeApplyVelocity = displacement / scaledDeltaTime;
-        }
-        else
-        {
-            _toBeApplyVelocity = 2 * displacement / scaledDeltaTime - _velocity;
-        }
+        _toBeApplyVelocity = displacement / deltaTime + _additionVelocity;
 
         // cleanup
         _deltaPosition = Vector2.zero;
+        _additionVelocity = Vector2.zero;
         _deltaRotation = Quaternion.identity;
-        _isVelocityReset = false;
     }
 
     public void Commit()
@@ -138,6 +133,7 @@ public class BlendableMovement : MonoBehaviour, IManagedMovement, IMoveSubject
         _rb.MovePosition(_toBeApplyPosition);
         _rb.MoveRotation(_toBeApplyRotation);
         _velocity = _toBeApplyVelocity;
+        // Debug.Log($"{name} velocity: {_velocity}");
     }
 
     public Vector2 GetPosition()
@@ -155,15 +151,6 @@ public class BlendableMovement : MonoBehaviour, IManagedMovement, IMoveSubject
         return _velocity;
     }
 
-    /**
-     * set velocity if movement is not produce by acceleration.
-     * beware this method do not generate any displacement
-     */
-    public void SetVelocity(Vector2 velocity)
-    {
-        _velocity = velocity;
-    }
-
     public void MovePositionDelta(Vector2 deltaPosition)
     {
         _deltaPosition += deltaPosition;
@@ -174,21 +161,8 @@ public class BlendableMovement : MonoBehaviour, IManagedMovement, IMoveSubject
         _deltaRotation *= deltaRotation;
     }
 
-    public void ResetVelocity()
+    public void AddVelocity(Vector2 velocity)
     {
-        _isVelocityReset = true;
-    }
-
-    public Rigidbody2D GetRigidbody()
-    {
-        return _rb;
-    }
-
-    public T GetMovement<T>() where T : IMoveHandler
-    {
-        return _handlers
-            .Where(handler => handler is T)
-            .Cast<T>()
-            .First();
+        _additionVelocity += velocity;
     }
 }

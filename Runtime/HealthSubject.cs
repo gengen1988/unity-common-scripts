@@ -41,12 +41,13 @@ public class HealthSubject : MonoBehaviour, IHurtHandler
         _blockers.Clear();
         _currentHP = InitialHP;
         _isDead = false;
-        ComponentEvent<HealthSubject>.NotifyEnabled(this);
+
+        IComponentManager<HealthSubject>.NotifyEnabled(this);
     }
 
     private void OnDisable()
     {
-        ComponentEvent<HealthSubject>.NotifyDisabled(this);
+        IComponentManager<HealthSubject>.NotifyDisabled(this);
     }
 
     public void OnHurt(HitSubject src, HurtSubject dest, CollisionEventData evtData)

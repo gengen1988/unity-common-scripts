@@ -32,24 +32,26 @@ public static class PoolWrapper
 
     public static bool IsAlive(GameObject gameObject, int spawnStamp)
     {
-        if (spawnStamp < 0)
+        if (LeanPool.Links.ContainsKey(gameObject))
         {
-            return false;
-        }
+            if (spawnStamp < 0)
+            {
+                return false;
+            }
 
-        if (!gameObject || !gameObject.activeInHierarchy)
+            int currentStamp = GetStamp(gameObject);
+            if (currentStamp < 0)
+            {
+                return false;
+            }
+
+            // Debug.Log($"{gameObject} is alive: current - {currentStamp}, spawn - {spawnStamp}");
+            return currentStamp == spawnStamp;
+        }
+        else
         {
-            return false;
+            return gameObject && gameObject.activeInHierarchy;
         }
-
-        int currentStamp = GetStamp(gameObject);
-        if (currentStamp < 0)
-        {
-            return false;
-        }
-
-        // Debug.Log($"{gameObject} is alive: current - {currentStamp}, spawn - {spawnStamp}");
-        return currentStamp == spawnStamp;
     }
 
     public static bool IsAlive(Component component, int spawnStamp)

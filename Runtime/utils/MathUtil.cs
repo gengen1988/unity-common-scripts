@@ -245,26 +245,42 @@ public static class MathUtil
      */
     public static int Quadratic(float a, float b, float c, out float solution1, out float solution2)
     {
-        float toBeSqrt = b * b - 4 * a * c;
-
-        // one solution
-        if (Mathf.Approximately(toBeSqrt, 0))
+        // when a = 0, bx + c = 0
+        if (Mathf.Approximately(a, 0))
         {
-            solution1 = solution2 = -.5f * b / a;
+            if (Mathf.Approximately(b, 0))
+            {
+                solution1 = solution2 = float.NaN;
+                return 0;
+            }
+            else
+            {
+                solution1 = solution2 = -c / b;
+                return 1;
+            }
+        }
+
+        float delta = b * b - 4 * a * c;
+        float twoA = 2 * a;
+
+        // one solution (handle -0.0000000001 first)
+        if (Mathf.Approximately(delta, 0))
+        {
+            solution1 = solution2 = -b / twoA;
             return 1;
         }
 
         // no solution
-        if (toBeSqrt < 0)
+        if (delta < 0)
         {
             solution1 = solution2 = float.NaN;
             return 0;
         }
 
         // two solutions
-        float root = Mathf.Sqrt(toBeSqrt);
-        solution1 = (-b + root) / (2 * a);
-        solution2 = (-b - root) / (2 * a);
+        float root = Mathf.Sqrt(delta);
+        solution1 = (-b + root) / twoA;
+        solution2 = (-b - root) / twoA;
         return 2;
     }
 

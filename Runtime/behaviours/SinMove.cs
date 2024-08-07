@@ -9,13 +9,13 @@ public class SinMove : MonoBehaviour, IMoveHandler
 
     private float _elapsedTime;
 
-    public void OnMove(IMoveSubject subject, float deltaTime)
+    public void OnMove(BlendableMovement movement, float deltaTime)
     {
         float phase = PhaseOctave * Mathf.PI * 2;
         Vector3 localDisplacement = CalculateDisplacement(_elapsedTime, deltaTime, phase);
-        Quaternion rotation = MathUtil.QuaternionByAngle(Angle) * subject.GetRotation();
+        Quaternion rotation = MathUtil.QuaternionByAngle(Angle) * movement.GetRotation();
         Vector3 displacement = rotation * localDisplacement;
-        subject.MovePositionDelta(displacement);
+        movement.MovePositionDelta(displacement);
         _elapsedTime = MathUtil.Mod(_elapsedTime + deltaTime, Period);
     }
 
