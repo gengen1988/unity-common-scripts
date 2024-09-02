@@ -96,7 +96,7 @@ public static class PoolWrapper
     private static void AttachStamp(GameObject gameObject)
     {
         int stamp = Random.Range(10000, 100000);
-        PoolAddition data = gameObject.GetOrAddComponent<PoolAddition>();
+        PoolAddition data = gameObject.EnsureComponent<PoolAddition>();
         data.Stamp = stamp;
     }
 

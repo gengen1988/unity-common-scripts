@@ -10,13 +10,13 @@ public class Unit : MonoBehaviour
     private void CheckComponents()
     {
         gameObject.layer = LayerMask.NameToLayer(LAYER_NAME);
-        Rigidbody2D rb = gameObject.GetOrAddComponent<Rigidbody2D>();
-        BoxCollider2D col = gameObject.GetOrAddComponent<BoxCollider2D>();
+        Rigidbody2D rb = gameObject.EnsureComponent<Rigidbody2D>();
+        BoxCollider2D col = gameObject.EnsureComponent<BoxCollider2D>();
         col.isTrigger = true;
         rb.interpolation = RigidbodyInterpolation2D.Interpolate;
-        gameObject.GetOrAddComponent<IFFTransponder>();
-        gameObject.GetOrAddComponent<HurtSubject>();
-        gameObject.GetOrAddComponent<HealthSubject>();
+        gameObject.EnsureComponent<IFFTransponder>();
+        gameObject.EnsureComponent<HurtSubject>();
+        gameObject.EnsureComponent<HealthSubject>();
 
 
 #if UNITY_EDITOR

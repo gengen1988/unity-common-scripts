@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -30,7 +29,7 @@ public class SystemManager : SingletonBehaviour<SystemManager>
         // refresh cache
         if (!Instance._systemByType.TryGetValue(typeof(T), out Component spawned))
         {
-            Debug.LogError($"some one require {typeof(T)} to work");
+            Debug.LogError($"someone require {typeof(T)} to work");
         }
 
         T newValue = spawned as T;

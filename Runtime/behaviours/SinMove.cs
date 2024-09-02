@@ -9,7 +9,7 @@ public class SinMove : MonoBehaviour, IMoveHandler
 
     private float _elapsedTime;
 
-    public void OnMove(BlendableMovement movement, float deltaTime)
+    public void OnMove(MoveSubject movement, float deltaTime)
     {
         float phase = PhaseOctave * Mathf.PI * 2;
         Vector3 localDisplacement = CalculateDisplacement(_elapsedTime, deltaTime, phase);

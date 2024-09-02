@@ -2,7 +2,7 @@
 
 public abstract class SingletonBehaviour<T> : MonoBehaviour where T : SingletonBehaviour<T>
 {
-    private static T _instance;
+    protected static T _instance;
 
     public static T Instance => _instance;
 
@@ -15,5 +15,13 @@ public abstract class SingletonBehaviour<T> : MonoBehaviour where T : SingletonB
 
     protected virtual void OnAwake()
     {
+    }
+
+    public void EnsureSingleton()
+    {
+        if (!_instance)
+        {
+            _instance = this as T;
+        }
     }
 }

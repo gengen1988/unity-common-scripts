@@ -40,7 +40,7 @@ public class VFXManager : MonoBehaviour
         }
 
         GameObject go = PoolWrapper.Spawn(prefab, position, rotation);
-        VFXCtrl vfx = go.GetOrAddComponent<VFXCtrl>();
+        VFXCtrl vfx = go.EnsureComponent<VFXCtrl>();
         vfx.Init(following, timeout);
         _allVFXs.Add(vfx);
         return vfx;

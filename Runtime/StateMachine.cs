@@ -53,6 +53,15 @@ public class StateMachine<TContext>
     {
         _previousState = state;
     }
+
+    public void SendMessage(string message)
+    {
+        IState<TContext> nextState = _currentState?.OnMessage(message);
+        if (nextState != null)
+        {
+            TransitionTo(nextState);
+        }
+    }
 }
 
 public interface IState<in TContext>
@@ -60,6 +69,7 @@ public interface IState<in TContext>
     public void OnEnter(TContext context);
     public void OnExit(TContext context);
     public void OnTick(TContext context, float deltaTime);
+    public IState<TContext> OnMessage(string message);
 }
 
 public abstract class State<TState, TContext> : Singleton<TState>, IState<TContext> where TState : class, new()
@@ -74,5 +84,10 @@ public abstract class State<TState, TContext> : Singleton<TState>, IState<TConte
 
     public virtual void OnTick(TContext context, float deltaTime)
     {
+    }
+
+    public virtual IState<TContext> OnMessage(string message)
+    {
+        return null;
     }
 }

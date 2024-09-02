@@ -1,25 +1,32 @@
 ﻿using System;
 using UnityEngine;
 
-public class BlendableMovement : MonoBehaviour
+public class MoveSubject : MonoBehaviour
 {
     public bool DebugLog;
+    public bool Interpolation;
+
+    [Header("Platformer")]
     public bool ConstraintByRaycast;
-    public PlatformerRaycaster _raycaster;
+    public LayerMask GroundMask;
+    public LayerMask PlatformMask;
+    public PlatformerRaycaster Raycaster;
 
     private bool _isGrounded;
     private bool _requestStop;
     private Vector2 _deltaPosition;
     private Quaternion _deltaRotation;
     private Vector2 _velocity;
-    private Vector2 _additionVelocity;
+    private Vector2 _additionalVelocity;
     private Vector2 _toBeApplyPosition;
     private Quaternion _toBeApplyRotation;
     private Vector2 _toBeApplyVelocity;
 
+    private Transform _self;
     private Rigidbody2D _rb;
     private IMoveHandler[] _handlers;
     private bool _overrideVelocity;
+    private bool _downFromPlatform;
 
     public event Action OnGrounded;
 
@@ -27,7 +34,7 @@ public class BlendableMovement : MonoBehaviour
     {
         if (ConstraintByRaycast)
         {
-            _raycaster.DrawGizmos(transform.position);
+            Raycaster.DrawGizmos(transform.position);
         }
 
         if (Application.isPlaying)
@@ -38,9 +45,13 @@ public class BlendableMovement : MonoBehaviour
 
     private void Awake()
     {
+        if (Interpolation)
+        {
+            gameObject.EnsureComponent<TransformInterpolator>();
+        }
+
+        _self = transform;
         TryGetComponent(out _rb);
-        Debug.Assert(_rb, this);
-        Debug.Assert(_rb.interpolation == RigidbodyInterpolation2D.Interpolate, this);
         _handlers = this.GetAttachedComponents<IMoveHandler>();
     }
 
@@ -52,25 +63,30 @@ public class BlendableMovement : MonoBehaviour
         _velocity = Vector2.zero;
 
         // notify manager
-        IComponentManager<BlendableMovement>.NotifyEnabled(this);
+        IComponentManager<MoveSubject>.NotifyEnabled(this);
     }
 
     private void OnDisable()
     {
-        IComponentManager<BlendableMovement>.NotifyDisabled(this);
+        IComponentManager<MoveSubject>.NotifyDisabled(this);
     }
 
 #if UNITY_EDITOR
     private void Start()
     {
         // 检查是否缺少必要系统
-        Debug.Assert(SystemManager.GetSystem<MovementResolver>());
+        Debug.Assert(SystemManager.GetSystem<MovementManager>());
     }
 #endif
 
     private void OnDestroy()
     {
         OnGrounded = null;
+    }
+
+    public void DownFromPlatform()
+    {
+        _downFromPlatform = true;
     }
 
     public void Tick(float deltaTime)
@@ -81,6 +97,7 @@ public class BlendableMovement : MonoBehaviour
         // game logic
         float timeScale = TimeCtrl.GetGameplayTimeScale(this);
         float scaledDeltaTime = timeScale * deltaTime;
+        _downFromPlatform = false;
         foreach (IMoveHandler movement in _handlers)
         {
             if (movement is not Behaviour unityBehaviour)
@@ -108,10 +125,20 @@ public class BlendableMovement : MonoBehaviour
         Vector2 displacement = _deltaPosition;
         if (ConstraintByRaycast)
         {
-            _isGrounded = _raycaster.Cast(currentPosition, ref displacement);
+            // solid ground
+            _isGrounded = Raycaster.Cast(currentPosition, GroundMask, ref displacement);
+
+            if (!_downFromPlatform)
+            {
+                // one way platform
+                if (_velocity.y < 0 && !_isGrounded)
+                {
+                    _isGrounded = Raycaster.Cast(currentPosition, PlatformMask, ref displacement);
+                }
+            }
+
             if (_isGrounded)
             {
-                // TODO bounce
                 OnGrounded?.Invoke();
             }
         }
@@ -119,11 +146,11 @@ public class BlendableMovement : MonoBehaviour
         // execute move
         _toBeApplyPosition = currentPosition + displacement;
         _toBeApplyRotation = currentRotation * _deltaRotation;
-        _toBeApplyVelocity = displacement / deltaTime + _additionVelocity;
+        _toBeApplyVelocity = displacement / deltaTime + _additionalVelocity;
 
         // cleanup
+        _additionalVelocity = Vector2.zero;
         _deltaPosition = Vector2.zero;
-        _additionVelocity = Vector2.zero;
         _deltaRotation = Quaternion.identity;
     }
 
@@ -133,17 +160,22 @@ public class BlendableMovement : MonoBehaviour
         _rb.MovePosition(_toBeApplyPosition);
         _rb.MoveRotation(_toBeApplyRotation);
         _velocity = _toBeApplyVelocity;
-        // Debug.Log($"{name} velocity: {_velocity}");
+
+        if (Interpolation)
+        {
+            _self.position = _toBeApplyPosition;
+            _self.rotation = _toBeApplyRotation;
+        }
     }
 
     public Vector2 GetPosition()
     {
-        return _rb.position;
+        return _self.position;
     }
 
     public Quaternion GetRotation()
     {
-        return MathUtil.QuaternionByAngle(_rb.rotation);
+        return _self.rotation;
     }
 
     public Vector2 GetVelocity()
@@ -161,8 +193,23 @@ public class BlendableMovement : MonoBehaviour
         _deltaRotation *= deltaRotation;
     }
 
-    public void AddVelocity(Vector2 velocity)
+    public void AddVelocityCorrection(Vector2 correction)
     {
-        _additionVelocity += velocity;
+        _additionalVelocity += correction;
+    }
+
+    public void Accelerate(Vector2 acceleration, float deltaTime)
+    {
+        Vector2 deltaVelocity = acceleration * deltaTime;
+        Vector2 deltaVelocityMidpoint = deltaVelocity * 0.5f;
+        Vector2 displacementByAcceleration = deltaVelocityMidpoint * deltaTime;
+        // Debug.Log($"acceleration: {acceleration}, displacement by acceleration: {displacementByAcceleration}");
+        _deltaPosition += displacementByAcceleration;
+        _additionalVelocity += deltaVelocityMidpoint;
+    }
+
+    public bool IsGrounded()
+    {
+        return _isGrounded;
     }
 }

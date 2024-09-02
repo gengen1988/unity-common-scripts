@@ -10,7 +10,6 @@ public class PlatformerRaycaster
     public float ShellThickness = 0.1f;
     public int HorizontalRayCount = 3;
     public int VerticalRayCount = 3;
-    public ContactFilter2D ContactFilter;
 
     private readonly List<RaycastHit2D> _buffer = new();
 
@@ -23,7 +22,7 @@ public class PlatformerRaycaster
         Gizmos.DrawWireCube(point, Size - Vector2.one * ShellThickness);
     }
 
-    public bool Cast(Vector2 position, ref Vector2 displacement)
+    public bool Cast(Vector2 position, LayerMask layerMask, ref Vector2 displacement)
     {
         bool hit = false;
         Vector2 center = position + Offset;
@@ -39,6 +38,7 @@ public class PlatformerRaycaster
                 center,
                 horizontalExtent,
                 signY * verticalExtent,
+                layerMask,
                 ref distanceY))
         {
             hit = true;
@@ -51,6 +51,7 @@ public class PlatformerRaycaster
                 center,
                 verticalExtent,
                 signX * horizontalExtent,
+                layerMask,
                 ref distanceX))
         {
             hit = true;
@@ -65,13 +66,24 @@ public class PlatformerRaycaster
     }
 
     // Helper method for raycasting
-    private bool PerformRaycast(int count, Vector2 center, Vector2 range, Vector2 direction, ref float distance)
+    private bool PerformRaycast(
+        int count,
+        Vector2 center,
+        Vector2 range,
+        Vector2 direction,
+        LayerMask mask,
+        ref float distance)
     {
         bool hit = false;
+        ContactFilter2D contactFilter = new()
+        {
+            useLayerMask = true,
+            layerMask = mask,
+        };
         foreach (Vector3 delta in MathUtil.FormationLine(count, -range, range))
         {
             Vector2 origin = center + direction + (Vector2)delta;
-            Physics2D.Raycast(origin, direction, ContactFilter, _buffer, distance + ShellThickness);
+            Physics2D.Raycast(origin, direction, contactFilter, _buffer, distance + ShellThickness);
             foreach (RaycastHit2D hitInfo in _buffer)
             {
                 float actualDistance = hitInfo.distance - ShellThickness;

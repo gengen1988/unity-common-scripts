@@ -5,24 +5,24 @@ using UnityEngine;
  * 这个系统的好处是，生成的新对象不会错过那一帧的移动
  */
 [DefaultExecutionOrder(10)]
-public class MovementResolver : MonoBehaviour, IComponentManager<BlendableMovement>
+public class MovementManager : MonoBehaviour, IComponentManager<MoveSubject>
 {
-    private readonly HashSet<BlendableMovement> _subjects = new();
+    private readonly HashSet<MoveSubject> _subjects = new();
 
     private void Awake()
     {
-        IComponentManager<BlendableMovement>.RegisterManager(this);
+        IComponentManager<MoveSubject>.RegisterManager(this);
     }
 
     private void OnDestroy()
     {
-        IComponentManager<BlendableMovement>.DeregisterManager(this);
+        IComponentManager<MoveSubject>.DeregisterManager(this);
     }
 
     private void FixedUpdate()
     {
         float deltaTime = Time.deltaTime;
-        foreach (BlendableMovement subject in _subjects)
+        foreach (MoveSubject subject in _subjects)
         {
             if (!subject.isActiveAndEnabled)
             {
@@ -32,7 +32,7 @@ public class MovementResolver : MonoBehaviour, IComponentManager<BlendableMoveme
             subject.Tick(deltaTime);
         }
 
-        foreach (BlendableMovement subject in _subjects)
+        foreach (MoveSubject subject in _subjects)
         {
             if (!subject.isActiveAndEnabled)
             {
@@ -43,12 +43,12 @@ public class MovementResolver : MonoBehaviour, IComponentManager<BlendableMoveme
         }
     }
 
-    public void OnComponentEnabled(BlendableMovement component)
+    public void OnComponentEnabled(MoveSubject component)
     {
         _subjects.Add(component);
     }
 
-    public void OnComponentDisabled(BlendableMovement component)
+    public void OnComponentDisabled(MoveSubject component)
     {
         _subjects.Remove(component);
     }

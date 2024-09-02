@@ -17,7 +17,7 @@ public class VFXCtrl : MonoBehaviour
     {
         _selfTransform = transform;
         _ps = GetComponentInChildren<ParticleSystem>();
-        _proxy = _ps.gameObject.GetOrAddComponent<ParticleSystemEventProxy>();
+        _proxy = _ps.gameObject.EnsureComponent<ParticleSystemEventProxy>();
         _proxy.OnStopped += HandleParticleSystemStopped;
     }
 

@@ -14,7 +14,7 @@ public class Shooter : MonoBehaviour
     private int _burstRemaining;
 
     private IFFTransponder _transponder;
-    private BlendableMovement _movement;
+    private MoveSubject _movement;
 
     public bool IsFiring => _burstRemaining > 0;
 
@@ -57,7 +57,7 @@ public class Shooter : MonoBehaviour
     private void Awake()
     {
         _transponder = GetComponentInParent<IFFTransponder>();
-        _movement = GetComponentInParent<BlendableMovement>();
+        _movement = GetComponentInParent<MoveSubject>();
     }
 
     private void OnEnable()

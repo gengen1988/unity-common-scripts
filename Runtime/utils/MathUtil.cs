@@ -55,6 +55,12 @@ public static class MathUtil
         return 1 - Mathf.Pow(1 - s, deltaTime * REFERENCE_FRAME_RATE);
     }
 
+    public static float CalcSlope(Vector2 from, Vector2 to)
+    {
+        Vector2 los = to - from;
+        return los.y / los.x;
+    }
+
     /**
      * fifth-order version of Mathf.SmoothStep().
      */
@@ -245,7 +251,7 @@ public static class MathUtil
      */
     public static int Quadratic(float a, float b, float c, out float solution1, out float solution2)
     {
-        // when a = 0, bx + c = 0
+        // if a = 0, then solve bx + c = 0
         if (Mathf.Approximately(a, 0))
         {
             if (Mathf.Approximately(b, 0))
@@ -564,5 +570,18 @@ public static class MathUtil
     public static void WeightedSum()
     {
         throw new NotImplementedException();
+    }
+
+    /**
+     * similar with Vector2.ClampMagnitude but in 1D space
+     */
+    public static float ClampAbs(float value, float maxAbs)
+    {
+        if (Mathf.Abs(value) > maxAbs)
+        {
+            return Mathf.Sign(value) * maxAbs;
+        }
+
+        return value;
     }
 }

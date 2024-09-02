@@ -9,5 +9,5 @@ public interface IMoveHandler
      * 实现中可能同时操作 rotation 或 position，而不是仅仅操作一种
      * 比如导弹追踪时既要转向，也要改变位移
      */
-    void OnMove(BlendableMovement movement, float deltaTime);
+    void OnMove(MoveSubject movement, float deltaTime);
 }

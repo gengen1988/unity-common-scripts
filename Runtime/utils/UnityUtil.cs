@@ -22,7 +22,7 @@ public static class UnityUtil
     /**
      * 取得鼠标在世界座标的位置。兼容 InputSystem
      */
-    public static Vector2 GetMouseWorldPosition()
+    public static Vector2 GetMousePositionWorld()
     {
         Vector2 mousePosition;
 
@@ -45,6 +45,13 @@ public static class UnityUtil
         }
 
         return mainCamera.ScreenToWorldPoint(mousePosition);
+    }
+
+    public static Vector2 GetMousePositionDelta()
+    {
+        float x = Input.GetAxisRaw("Mouse X");
+        float y = Input.GetAxisRaw("Mouse Y");
+        return new Vector2(x, y);
     }
 
     /**
@@ -89,7 +96,7 @@ public static class UnityUtil
         return child;
     }
 
-    public static T GetOrAddComponent<T>(this GameObject go) where T : Component
+    public static T EnsureComponent<T>(this GameObject go) where T : Component
     {
         if (!go.TryGetComponent(out T result))
         {
@@ -188,7 +195,7 @@ public static class UnityUtil
     {
         if (Application.isPlaying)
         {
-            foreach (Transform child in root.Children())
+            foreach (Transform child in root)
             {
                 Object.Destroy(child.gameObject);
             }

@@ -4,6 +4,6 @@ public class FollowMouse : MonoBehaviour
 {
     void Update()
     {
-        transform.position = UnityUtil.GetMouseWorldPosition();
+        transform.position = UnityUtil.GetMousePositionWorld();
     }
 }

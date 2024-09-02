@@ -32,7 +32,7 @@ public class DebugInputDeprecated : MonoBehaviour
     {
         var horizontal = Input.GetAxisRaw("Horizontal");
         var vertical = Input.GetAxisRaw("Vertical");
-        var mouseWorldPoint = UnityUtil.GetMouseWorldPosition();
+        var mouseWorldPoint = UnityUtil.GetMousePositionWorld();
         var mouseVector = mouseWorldPoint - (Vector2)MouseCenter.position;
 
         LeftStick = new Vector2(horizontal, vertical).normalized;

@@ -46,7 +46,7 @@ public class Projectile : MonoBehaviour, IHitHandler, IMoveHandler
         Die();
     }
 
-    public void OnMove(BlendableMovement movement, float deltaTime)
+    public void OnMove(MoveSubject movement, float deltaTime)
     {
         if (Mathf.Approximately(_profile.Acceleration, 0))
         {
