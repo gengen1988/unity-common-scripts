@@ -5,6 +5,7 @@ using UnityEngine;
 /**
  * 管理多个 collider 作为单一效果来源的的情况
  */
+[Obsolete]
 public class HitSubject : MonoBehaviour
 {
     public float HitInterval = 0.1f;
@@ -18,7 +19,7 @@ public class HitSubject : MonoBehaviour
     private IHitHandler[] _handlers;
 
     private readonly List<ContactPoint2D> _contactBuffer = new();
-    private readonly DictionaryList<HurtSubject, CollisionEventData> _eventsByHurtSubject = new();
+    private readonly DictionaryList<HurtSubject, HitEventData> _eventsByHurtSubject = new();
 
     private void Awake()
     {
@@ -76,9 +77,9 @@ public class HitSubject : MonoBehaviour
         Vector2 contactPoint = _contactBuffer.CenterOfMass(contact => contact.point);
 
         // leave hit manager processing
-        CollisionEventData evtData = new()
+        HitEventData evtData = new()
         {
-            HurtStamp = PoolWrapper.GetStamp(hurtSubject),
+            HurtStampWhenHit = PoolUtil.GetStamp(hurtSubject),
             ContactPoint = contactPoint,
             HitVelocity = -other.relativeVelocity,
         };
@@ -97,7 +98,7 @@ public class HitSubject : MonoBehaviour
         return from.TryGetComponent(out subject);
     }
 
-    private void TriggerHitEvent(HitSubject hitSubject, HurtSubject hurtSubject, CollisionEventData evtData)
+    private void TriggerHitEvent(HitSubject hitSubject, HurtSubject hurtSubject, HitEventData evtData)
     {
         foreach (IHitHandler handler in _handlers)
         {
@@ -164,13 +165,13 @@ public class HitSubject : MonoBehaviour
 
     private void TriggerEvents(HitSubject hitSubject, HurtSubject hurtSubject)
     {
-        LinkedList<CollisionEventData> events = _eventsByHurtSubject[hurtSubject];
+        LinkedList<HitEventData> events = _eventsByHurtSubject[hurtSubject];
         int hitCount = 0;
         Vector2 contactPoint = Vector2.zero;
         Vector2 hitVelocity = Vector2.zero;
-        foreach (CollisionEventData evt in events)
+        foreach (HitEventData evt in events)
         {
-            if (!PoolWrapper.IsAlive(hurtSubject, evt.HurtStamp))
+            if (!PoolUtil.IsAlive(hurtSubject, evt.HurtStampWhenHit))
             {
                 continue;
             }
@@ -185,9 +186,9 @@ public class HitSubject : MonoBehaviour
             return;
         }
 
-        CollisionEventData mergedEvent = new()
+        HitEventData mergedEvent = new()
         {
-            HurtStamp = PoolWrapper.GetStamp(hurtSubject),
+            HurtStampWhenHit = PoolUtil.GetStamp(hurtSubject),
             ContactPoint = contactPoint / hitCount,
             HitVelocity = hitVelocity / hitCount,
         };
@@ -201,7 +202,7 @@ public class HitSubject : MonoBehaviour
             return;
         }
 
-        hurtSubject.TriggerHurtEvent(hitSubject, hurtSubject, mergedEvent);
+        hurtSubject.NotifyHurtEvent(hitSubject, hurtSubject, mergedEvent);
         _coolingTime = HitInterval;
     }
 }

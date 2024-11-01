@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using JetBrains.Annotations;
 using UnityEngine;
 
 public static class CollectionUtil
@@ -203,11 +204,11 @@ public static class CollectionUtil
         }
     }
 
-    public static int FindMinIndexBy<T>(this IList<T> collection, Func<T, IComparable> orderBy)
+    public static int FindIndexMinBy<T>(this IList<T> collection, Func<T, IComparable> orderBy)
     {
         if (collection == null || collection.Count == 0)
         {
-            throw new ArgumentException("Collection cannot be null or empty", nameof(collection));
+            return -1;
         }
 
         int index = 0;
@@ -226,11 +227,11 @@ public static class CollectionUtil
         return index;
     }
 
-    public static int FindMaxIndexBy<T>(this IList<T> collection, Func<T, IComparable> orderBy)
+    public static int FindIndexMaxBy<T>(this IList<T> collection, Func<T, IComparable> orderBy)
     {
         if (collection == null || collection.Count == 0)
         {
-            throw new ArgumentException("Collection cannot be null or empty", nameof(collection));
+            return -1;
         }
 
         int index = 0;

@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 
+// 注意这个插帧和连续碰撞检测不兼容
 // source: https://discussions.unity.com/t/motion-interpolation-solution-to-eliminate-fixedupdate-stutter/891926
-
 /// <summary>
 /// How to use TransformInterpolator properly:
 /// 0. Make sure the gameObject executes its mechanics (transform-manipulations) in FixedUpdate().
@@ -12,13 +12,6 @@
 [DefaultExecutionOrder(-5000)]
 public class TransformInterpolator : MonoBehaviour
 {
-    private struct TransformData
-    {
-        public Vector3 Position;
-        public Vector3 Scale;
-        public Quaternion Rotation;
-    }
-
     private Transform _self;
     private TransformData _transformData;
     private TransformData _prevTransformData;

@@ -10,10 +10,10 @@ public abstract class SingletonBehaviour<T> : MonoBehaviour where T : SingletonB
     {
         Debug.Assert(_instance == null || _instance == this, $"{typeof(T)} has more than one instances", this);
         _instance = this as T;
-        OnAwake();
+        AfterAwake();
     }
 
-    protected virtual void OnAwake()
+    protected virtual void AfterAwake()
     {
     }
 

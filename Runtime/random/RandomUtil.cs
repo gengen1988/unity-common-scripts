@@ -50,7 +50,7 @@ public static class RandomUtil
     }
 
     /**
-     * 从列表中随机选中一个 (并放回)
+     * 从列表中随机选中一个 (放回)
      */
     public static T Select<T>(IList<T> list)
     {
@@ -116,7 +116,7 @@ public static class RandomUtil
     }
 
     /**
-     * negative weight is not allowed (zero is fine)
+     * negative weights are not allowed (zero is fine)
      */
     public static int WeightedIndex(params float[] weights)
     {
@@ -135,5 +135,27 @@ public static class RandomUtil
 
         // In case of rounding errors, return the last index
         return weights.Length - 1;
+    }
+
+    /**
+     * x is between 0 and 1
+     */
+    public static float FBM(float x, int octaveCount, int seed)
+    {
+        System.Random rng = new System.Random(seed);
+        float octaveDelta = 1f / octaveCount;
+        float octaveStart = 0;
+        float startValue = (float)rng.NextDouble();
+        float endValue = (float)rng.NextDouble();
+        while (x > octaveStart + octaveDelta)
+        {
+            startValue = endValue;
+            endValue = (float)rng.NextDouble();
+            octaveStart += octaveDelta;
+        }
+
+        float ratio = (x - octaveStart) / octaveDelta;
+        float y = MathUtil.SmootherStep(startValue, endValue, ratio);
+        return y;
     }
 }

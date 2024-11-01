@@ -14,9 +14,37 @@ public static class UnityUtil
 
     public static Vector2 GetInputVector()
     {
+        Vector2 vector = Vector2.zero;
+#if ENABLE_INPUT_SYSTEM
+        UnityEngine.InputSystem.Keyboard keyboard = UnityEngine.InputSystem.Keyboard.current;
+        if (keyboard != null)
+        {
+            if (keyboard.wKey.isPressed)
+            {
+                vector.y += 1;
+            }
+
+            if (keyboard.sKey.isPressed)
+            {
+                vector.y -= 1;
+            }
+
+            if (keyboard.aKey.isPressed)
+            {
+                vector.x -= 1;
+            }
+
+            if (keyboard.dKey.isPressed)
+            {
+                vector.x += 1;
+            }
+        }
+#else
         float h = Input.GetAxisRaw("Horizontal");
         float v = Input.GetAxisRaw("Vertical");
-        return new Vector2(h, v);
+        vector = new Vector2(h, v);
+#endif
+        return vector;
     }
 
     /**
@@ -44,6 +72,12 @@ public static class UnityUtil
             return mousePosition;
         }
 
+        if (!mainCamera.orthographic)
+        {
+            Debug.LogAssertion("MainCamera is not orthographic");
+            return mousePosition;
+        }
+
         return mainCamera.ScreenToWorldPoint(mousePosition);
     }
 
@@ -68,7 +102,7 @@ public static class UnityUtil
     }
 
     /**
-     * 确保一定有该名称的 child
+     * 确保一定有特定名称的 child
      */
     public static Transform EnsureChild(this Transform root, string childName)
     {
@@ -101,7 +135,7 @@ public static class UnityUtil
         if (!go.TryGetComponent(out T result))
         {
 #if UNITY_EDITOR
-            // this method may provide more detailed exception instead of fail silence,
+            // this method may provide more detailed exception, instead of fail silence,
             // such as instantiate an abstract class.
             result = ObjectFactory.AddComponent<T>(go);
 #else
@@ -110,6 +144,21 @@ public static class UnityUtil
         }
 
         return result;
+    }
+
+    public static T EnsureComponent<T>(this Component component) where T : Component
+    {
+        if (!component)
+        {
+            return null;
+        }
+
+        if (component is T result)
+        {
+            return result;
+        }
+
+        return EnsureComponent<T>(component.gameObject);
     }
 
 //     public static void EnsureComponent<T>(
@@ -299,5 +348,27 @@ public static class UnityUtil
         }
 
         return !trans1.IsChildOf(trans2) && !trans2.IsChildOf(trans1);
+    }
+
+    public static IEnumerable<Transform> TraverseTransform(Transform root, bool deep)
+    {
+        if (!root)
+        {
+            yield break;
+        }
+
+        foreach (Transform child in root)
+        {
+            yield return child;
+            if (!deep)
+            {
+                continue;
+            }
+
+            foreach (Transform childOfChild in TraverseTransform(child, true))
+            {
+                yield return childOfChild;
+            }
+        }
     }
 }

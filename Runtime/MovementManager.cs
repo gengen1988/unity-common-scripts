@@ -21,7 +21,6 @@ public class MovementManager : MonoBehaviour, IComponentManager<MoveSubject>
 
     private void FixedUpdate()
     {
-        float deltaTime = Time.deltaTime;
         foreach (MoveSubject subject in _subjects)
         {
             if (!subject.isActiveAndEnabled)
@@ -29,6 +28,7 @@ public class MovementManager : MonoBehaviour, IComponentManager<MoveSubject>
                 continue;
             }
 
+            float deltaTime = subject.GetDeltaTime() * Time.timeScale;
             subject.Tick(deltaTime);
         }
 

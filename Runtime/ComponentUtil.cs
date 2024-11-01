@@ -1,9 +1,23 @@
 ﻿using System;
 using System.Reflection;
+using UnityEditor;
 using UnityEngine;
 
 public static class ComponentUtil
 {
+    [MenuItem("GameObject / Tools / Sort Components")]
+    private static void SortComponents(MenuCommand menuCommand)
+    {
+        var gameObject = menuCommand.context as GameObject;
+        if (!gameObject)
+        {
+            return;
+        }
+
+        var components = gameObject.GetComponents<Component>();
+        // components.Select()
+    }
+
     public static void InitAutoReference(this MonoBehaviour component)
     {
         FieldInfo[] fields = component.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Instance);

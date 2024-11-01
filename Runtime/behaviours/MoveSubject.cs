@@ -1,6 +1,8 @@
 ﻿using System;
+// using Chronos;
 using UnityEngine;
 
+[Obsolete]
 public class MoveSubject : MonoBehaviour
 {
     public bool DebugLog;
@@ -22,6 +24,7 @@ public class MoveSubject : MonoBehaviour
     private Quaternion _toBeApplyRotation;
     private Vector2 _toBeApplyVelocity;
 
+    // private Timeline _time;
     private Transform _self;
     private Rigidbody2D _rb;
     private IMoveHandler[] _handlers;
@@ -52,6 +55,7 @@ public class MoveSubject : MonoBehaviour
 
         _self = transform;
         TryGetComponent(out _rb);
+        // TryGetComponent(out _time);
         _handlers = this.GetAttachedComponents<IMoveHandler>();
     }
 
@@ -61,6 +65,12 @@ public class MoveSubject : MonoBehaviour
         _deltaPosition = Vector2.zero;
         _deltaRotation = Quaternion.identity;
         _velocity = Vector2.zero;
+
+        // interpolation
+        if (Interpolation)
+        {
+            gameObject.EnsureComponent<TransformInterpolator>();
+        }
 
         // notify manager
         IComponentManager<MoveSubject>.NotifyEnabled(this);
@@ -76,6 +86,8 @@ public class MoveSubject : MonoBehaviour
     {
         // 检查是否缺少必要系统
         Debug.Assert(SystemManager.GetSystem<MovementManager>());
+        Debug.Assert(_rb, "move subject requires RigidBody2D to work", this);
+        // Debug.Assert(_time, "move subject requires Timeline (Chronos) to work", this);
     }
 #endif
 
@@ -93,10 +105,9 @@ public class MoveSubject : MonoBehaviour
     {
         Vector2 currentPosition = GetPosition();
         Quaternion currentRotation = GetRotation();
+        Debug.Log($"delta time: {deltaTime}");
 
         // game logic
-        float timeScale = TimeCtrl.GetGameplayTimeScale(this);
-        float scaledDeltaTime = timeScale * deltaTime;
         _downFromPlatform = false;
         foreach (IMoveHandler movement in _handlers)
         {
@@ -118,7 +129,7 @@ public class MoveSubject : MonoBehaviour
                 );
             }
 
-            movement.OnMove(this, scaledDeltaTime);
+            movement.OnMove(this, deltaTime);
         }
 
         // raycast
@@ -211,5 +222,11 @@ public class MoveSubject : MonoBehaviour
     public bool IsGrounded()
     {
         return _isGrounded;
+    }
+
+    public float GetDeltaTime()
+    {
+        return default;
+        // return _time.fixedDeltaTime;
     }
 }

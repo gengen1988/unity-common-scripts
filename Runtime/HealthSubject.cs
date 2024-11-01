@@ -1,11 +1,11 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using FMODUnity;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-public class HealthSubject : MonoBehaviour, IHurtHandler
+[Obsolete]
+public class HealthSubject : MonoBehaviour
 {
     public int InitialHP = 100;
 
@@ -37,10 +37,11 @@ public class HealthSubject : MonoBehaviour, IHurtHandler
 
     private void OnEnable()
     {
-        _stamp = PoolWrapper.GetStamp(this);
-        _blockers.Clear();
         _currentHP = InitialHP;
-        _isDead = false;
+
+        // _stamp = PoolWrapper.GetStamp(this);
+        // _blockers.Clear();
+        // _isDead = false;
 
         IComponentManager<HealthSubject>.NotifyEnabled(this);
     }
@@ -50,73 +51,50 @@ public class HealthSubject : MonoBehaviour, IHurtHandler
         IComponentManager<HealthSubject>.NotifyDisabled(this);
     }
 
-    public void OnHurt(HitSubject src, HurtSubject dest, CollisionEventData evtData)
+    // public void KillSelf()
+    // {
+    //     Die();
+    // }
+    //
+    // private void Die()
+    // {
+    //     if (_isDead)
+    //     {
+    //         return;
+    //     }
+    //
+    //     _isDead = true;
+    //     OnDied?.Invoke(); // others may destroy self in this timing
+    //     StartCoroutine(DieProcedure());
+    // }
+    //
+    // private IEnumerator DieProcedure()
+    // {
+    //     // wait for blockers
+    //     if (_blockers.Count > 0)
+    //     {
+    //         yield return null;
+    //     }
+    //
+    //     yield return new WaitForSeconds(DeathBeforeTime);
+    //     VFXWrapper.Spawn(VFXOnDeath, transform.position, Quaternion.identity);
+    //     AudioWrapper.PlayOneShot(SFXOnDeath);
+    //     yield return new WaitForSeconds(DeathAfterTime);
+    //
+    //     // 可能在之前的 coroutine 中已经命中他人而提前销毁了
+    //     int currentStamp = PoolWrapper.GetStamp(gameObject);
+    //     if (currentStamp == _stamp)
+    //     {
+    //         PoolWrapper.Despawn(gameObject);
+    //     }
+    // }
+
+    public void DealDamage(int damage)
     {
-        if (_isDead)
-        {
-            return;
-        }
-
-        if (!src.TryGetComponent(out DamageSubject damageSubject))
-        {
-            Debug.LogError("damage subject not found", this);
-            return;
-        }
-
-        int damageAmount = damageSubject.Damage;
-        _currentHP -= damageAmount;
-        // OnHealthReduced?.Invoke(this, damageAmount);
+        _currentHP -= damage;
         if (_currentHP <= 0)
         {
-            Die();
+            // Die();
         }
-    }
-
-    public void KillSelf()
-    {
-        Die();
-    }
-
-    private void Die()
-    {
-        if (_isDead)
-        {
-            return;
-        }
-
-        _isDead = true;
-        OnDied?.Invoke(); // others may destroy self in this timing
-        StartCoroutine(DieProcedure());
-    }
-
-    private IEnumerator DieProcedure()
-    {
-        // wait for blockers
-        if (_blockers.Count > 0)
-        {
-            yield return null;
-        }
-
-        yield return new WaitForSeconds(DeathBeforeTime);
-        VFXWrapper.Spawn(VFXOnDeath, transform.position, Quaternion.identity);
-        AudioWrapper.PlayOneShot(SFXOnDeath);
-        yield return new WaitForSeconds(DeathAfterTime);
-
-        // 可能在之前的 coroutine 中已经命中他人而提前销毁了
-        int currentStamp = PoolWrapper.GetStamp(gameObject);
-        if (currentStamp == _stamp)
-        {
-            PoolWrapper.Despawn(gameObject);
-        }
-    }
-
-    public void AcquireBlock(Object blocker)
-    {
-        _blockers.Add(blocker);
-    }
-
-    public void ReleaseBlock(Object blocker)
-    {
-        _blockers.Remove(blocker);
     }
 }

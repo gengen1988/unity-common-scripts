@@ -14,7 +14,7 @@ public class HurtSubject : MonoBehaviour
         _handlers = this.GetAttachedComponents<IHurtHandler>();
     }
 
-    public void TriggerHurtEvent(HitSubject hitSubject, HurtSubject hurtSubject, CollisionEventData evtData)
+    public void NotifyHurtEvent(HitSubject hitSubject, HurtSubject hurtSubject, HitEventData evtData)
     {
         foreach (IHurtHandler handler in _handlers)
         {

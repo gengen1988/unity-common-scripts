@@ -5,8 +5,8 @@ public class Spawner : MonoBehaviour
 {
     public PositionProvider Provider;
     public GameObject ToBeSpawn;
-    public int MaxNumber = 3;
-    public float ProduceTime = 1f;
+    public int MaxAmount = 3;
+    public float SpawnTime = 1f;
 
     private float _cooldownTime;
     private readonly List<GameObject> spawned = new List<GameObject>();
@@ -15,7 +15,7 @@ public class Spawner : MonoBehaviour
     {
         // count check
         spawned.RemoveAll(instance => !instance);
-        if (spawned.Count >= MaxNumber)
+        if (spawned.Count >= MaxAmount)
         {
             return;
         }
@@ -26,7 +26,7 @@ public class Spawner : MonoBehaviour
             Vector3 position = Provider.GetRandomPosition();
             GameObject newObj = Instantiate(ToBeSpawn, position, Quaternion.identity);
             spawned.Add(newObj);
-            _cooldownTime += ProduceTime;
+            _cooldownTime += SpawnTime;
         }
 
         _cooldownTime -= Time.deltaTime;

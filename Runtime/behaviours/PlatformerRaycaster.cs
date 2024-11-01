@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[Obsolete]
 [Serializable]
 public class PlatformerRaycaster
 {

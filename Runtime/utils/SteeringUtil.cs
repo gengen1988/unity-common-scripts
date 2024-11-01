@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
 public static class SteeringUtil
 {
@@ -126,7 +125,7 @@ public static class SteeringUtil
 
     public static Vector2 InputToSteering(Vector2 input, Quaternion rotation, float maxSteering)
     {
-        Vector3 inputWorld = Quaternion.Euler(0, 0, -90f) * rotation * input;
+        Vector3 inputWorld = rotation * input;
         Vector3 steering = Vector3.ClampMagnitude(inputWorld, 1) * maxSteering;
         return steering;
     }
@@ -134,8 +133,8 @@ public static class SteeringUtil
     public static Vector2 SteeringToInput(Vector2 steering, Quaternion rotation, float maxSteering)
     {
         float ratio = Mathf.Clamp01(steering.magnitude / maxSteering);
-        Vector3 inputWorld = Vector3.ClampMagnitude(steering, ratio);
-        Vector3 inputLocal = Quaternion.Euler(0, 0, 90f) * Quaternion.Inverse(rotation) * inputWorld;
+        Vector3 inputWorld = steering.normalized * ratio;
+        Vector3 inputLocal = Quaternion.Inverse(rotation) * inputWorld;
         return inputLocal;
     }
 }

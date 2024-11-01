@@ -40,6 +40,9 @@ public static class DebugUtil
         float angleStep = angle / SEGMENTS;
         Vector2 actualFrom = from.normalized * radius;
         Vector2 previousPoint = center + actualFrom;
+
+        Debug.DrawLine(center, previousPoint, color);
+
         for (int i = 1; i <= SEGMENTS; i++)
         {
             Quaternion rotation = Quaternion.Euler(0, 0, angleStep * i);
@@ -47,6 +50,8 @@ public static class DebugUtil
             Debug.DrawLine(previousPoint, currentPoint, color);
             previousPoint = currentPoint;
         }
+
+        Debug.DrawLine(center, previousPoint, color);
     }
 
     public static void DrawWireCircle2D(Vector2 center, float radius, Color color)
@@ -63,6 +68,9 @@ public static class GizmosUtil
         float angleStep = angle / SEGMENTS;
         Vector2 actualFrom = from.normalized * radius;
         Vector2 previousPoint = center + actualFrom;
+
+        Gizmos.DrawLine(center, previousPoint);
+
         for (int i = 1; i <= SEGMENTS; i++)
         {
             Quaternion rotation = Quaternion.Euler(0, 0, angleStep * i);
@@ -70,6 +78,8 @@ public static class GizmosUtil
             Gizmos.DrawLine(previousPoint, currentPoint);
             previousPoint = currentPoint;
         }
+
+        Gizmos.DrawLine(center, previousPoint);
     }
 
     public static void DrawWireCircle2D(Vector2 center, float radius)

@@ -1,13 +1,3 @@
-using UnityEngine;
-
-public static class StateMachine
-{
-    public static StateMachine<TContext> CreateInstance<TContext>(TContext context)
-    {
-        return new StateMachine<TContext>(context);
-    }
-}
-
 public class StateMachine<TContext>
 {
     private readonly TContext _context;
@@ -20,12 +10,6 @@ public class StateMachine<TContext>
         _context = context;
     }
 
-    public void Tick(float deltaTime)
-    {
-        Debug.Assert(_currentState != null, "current state is null");
-        _currentState?.OnTick(_context, deltaTime);
-    }
-
     public void TransitionTo(IState<TContext> nextState)
     {
         _currentState?.OnExit(_context);
@@ -34,9 +18,14 @@ public class StateMachine<TContext>
         nextState?.OnEnter(_context);
     }
 
-    public void RevertToPreviousState()
+    public void RevertBack()
     {
         TransitionTo(_previousState);
+    }
+
+    public void SendMessage(string message = null)
+    {
+        _currentState?.OnMessage(_context, message);
     }
 
     public IState<TContext> GetCurrentState()
@@ -53,41 +42,26 @@ public class StateMachine<TContext>
     {
         _previousState = state;
     }
-
-    public void SendMessage(string message)
-    {
-        IState<TContext> nextState = _currentState?.OnMessage(message);
-        if (nextState != null)
-        {
-            TransitionTo(nextState);
-        }
-    }
 }
 
 public interface IState<in TContext>
 {
-    public void OnEnter(TContext context);
-    public void OnExit(TContext context);
-    public void OnTick(TContext context, float deltaTime);
-    public IState<TContext> OnMessage(string message);
+    public void OnEnter(TContext ctx);
+    public void OnExit(TContext ctx);
+    public void OnMessage(TContext ctx, string message);
 }
 
-public abstract class State<TState, TContext> : Singleton<TState>, IState<TContext> where TState : class, new()
+public abstract class State<TContext, TState> : Singleton<TState>, IState<TContext> where TState : class, new()
 {
-    public virtual void OnEnter(TContext context)
+    public virtual void OnEnter(TContext ctx)
     {
     }
 
-    public virtual void OnExit(TContext context)
+    public virtual void OnExit(TContext ctx)
     {
     }
 
-    public virtual void OnTick(TContext context, float deltaTime)
+    public virtual void OnMessage(TContext ctx, string message)
     {
-    }
-
-    public virtual IState<TContext> OnMessage(string message)
-    {
-        return null;
     }
 }

@@ -63,10 +63,10 @@ public static class MathUtil
 
     /**
      * fifth-order version of Mathf.SmoothStep().
+     * see: https://en.wikipedia.org/wiki/Smoothstep
      */
     public static float SmootherStep(float from, float to, float t)
     {
-        // see: https://en.wikipedia.org/wiki/Smoothstep
         float y = t * t * t * (t * (6 * t - 15) + 10);
         return Mathf.Lerp(from, to, y);
     }
@@ -377,7 +377,7 @@ public static class MathUtil
     /**
      * check circle intersection with a ray
      */
-    public static int CircleRayIntersection(
+    public static int CircleRayIntersect(
         Vector2 center,
         float radius,
         Ray2D ray,
@@ -583,5 +583,32 @@ public static class MathUtil
         }
 
         return value;
+    }
+
+    public static bool IsInAngle(Vector2 los, Vector2 from, float angle)
+    {
+        // 特殊情况：如果角度大于等于360度或小于等于-360度，返回true
+        if (Mathf.Abs(angle) >= 360f)
+        {
+            return true;
+        }
+
+        var angleToOther = Vector2.SignedAngle(from, los); // range: -180 to 180
+        if (angle > 180f)
+        {
+            return angleToOther >= 0f || angleToOther < angle - 360f;
+        }
+        else if (angle >= 0f && angle <= 180f)
+        {
+            return angleToOther >= 0f && angleToOther <= angle;
+        }
+        else if (angle >= -180f && angle < 0f)
+        {
+            return angleToOther < 0f && angleToOther >= angle;
+        }
+        else // angle < -180f
+        {
+            return angleToOther < 0f || angleToOther > angle + 360f;
+        }
     }
 }
