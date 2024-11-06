@@ -20,17 +20,17 @@ public class Skill : MonoBehaviour
         OnPerform = null;
     }
 
-    public void Mount(Actor skillOwner)
+    public void Mount(ActorOld skillOwner)
     {
         OnMount?.Invoke(skillOwner);
     }
 
-    public void Unmount(Actor skillOwner)
+    public void Unmount(ActorOld skillOwner)
     {
         OnUnmount?.Invoke(skillOwner);
     }
 
-    public void Tick(Actor skillOwner, bool inputState)
+    public void Tick(ActorOld skillOwner, bool inputState)
     {
         float localDeltaTime = skillOwner.Timer.LocalDeltaTime;
         if (_cooldownTime > 0)

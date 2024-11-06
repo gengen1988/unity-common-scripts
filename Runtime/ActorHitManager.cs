@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-public delegate void HitHurtEvent(Actor hitSubject, Actor hurtSubject, HitEventData evtData);
+public delegate void HitHurtEvent(ActorOld hitSubject, ActorOld hurtSubject, HitEventData evtData);
 
 [DefaultExecutionOrder(10)]
 public class ActorHitManager : MonoBehaviour
@@ -12,12 +12,12 @@ public class ActorHitManager : MonoBehaviour
     public event HitHurtEvent OnHurt;
 
     private float _cooldownTime;
-    private Actor _actor;
-    private readonly DictionaryList<Actor, HitEventData> _eventsByHurtSubject = new();
+    private ActorOld _actorOld;
+    private readonly DictionaryList<ActorOld, HitEventData> _eventsByHurtSubject = new();
 
     private void Awake()
     {
-        TryGetComponent(out _actor);
+        TryGetComponent(out _actorOld);
     }
 
     private void OnEnable()
@@ -58,7 +58,7 @@ public class ActorHitManager : MonoBehaviour
         }
 
         // all subjects get hurt
-        foreach (Actor hurtSubject in _eventsByHurtSubject.Keys)
+        foreach (ActorOld hurtSubject in _eventsByHurtSubject.Keys)
         {
             // remove invalid events
             var events = _eventsByHurtSubject[hurtSubject];
@@ -73,8 +73,8 @@ public class ActorHitManager : MonoBehaviour
             _cooldownTime = mergedEvent.CooldownTime;
 
             // notify event
-            OnHit?.Invoke(_actor, hurtSubject, mergedEvent);
-            OnHurt?.Invoke(_actor, hurtSubject, mergedEvent);
+            OnHit?.Invoke(_actorOld, hurtSubject, mergedEvent);
+            OnHurt?.Invoke(_actorOld, hurtSubject, mergedEvent);
         }
 
         _eventsByHurtSubject.Clear();
@@ -122,7 +122,7 @@ public class ActorHitManager : MonoBehaviour
      * use this method to report collision.
      * either in event callback or raycast manually
      */
-    public static void EnqueueHitEvent(Actor hitSubject, Actor hurtSubject, HitEventData evtData)
+    public static void EnqueueHitEvent(ActorOld hitSubject, ActorOld hurtSubject, HitEventData evtData)
     {
         hitSubject.TryGetComponent(out ActorHitManager hitManager);
         evtData.HurtStampWhenHit = PoolUtil.GetStamp(hurtSubject);

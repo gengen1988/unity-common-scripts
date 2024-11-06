@@ -611,4 +611,9 @@ public static class MathUtil
             return angleToOther < 0f || angleToOther > angle + 360f;
         }
     }
+
+    public static int GetBit(int number, int index)
+    {
+        return (number & (1 << index)) > 0 ? 1 : 0;
+    }
 }

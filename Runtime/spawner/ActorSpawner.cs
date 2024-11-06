@@ -8,20 +8,20 @@ public class ActorSpawner : MonoBehaviour
     public float SpawnTime = 1f;
 
     private float _cooldownTime;
-    private readonly List<Actor> spawned = new();
+    private readonly List<ActorOld> spawned = new();
 
     private void Awake()
     {
-        TryGetComponent(out Actor actor);
+        TryGetComponent(out ActorOld actor);
         actor.OnMove += HandleMove;
     }
 
-    private void HandleMove(Actor actor)
+    private void HandleMove(ActorOld actorOld)
     {
         // cooldown
         if (_cooldownTime > 0)
         {
-            _cooldownTime -= actor.Timer.LocalDeltaTime;
+            _cooldownTime -= actorOld.Timer.LocalDeltaTime;
             return;
         }
 
@@ -34,8 +34,8 @@ public class ActorSpawner : MonoBehaviour
 
         // produce
         Vector3 position = transform.position;
-        Actor spawnedActor = ActorManager.SpawnActor(ToBeSpawn, position, Quaternion.identity);
-        spawned.Add(spawnedActor);
+        ActorOld spawnedActorOld = ActorManager.SpawnActor(ToBeSpawn, position, Quaternion.identity);
+        spawned.Add(spawnedActorOld);
         _cooldownTime += SpawnTime;
     }
 }

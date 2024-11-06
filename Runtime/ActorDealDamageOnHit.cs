@@ -11,7 +11,7 @@ public class ActorDealDamageOnHit : MonoBehaviour
         hitManager.OnHit += HandleHit;
     }
 
-    private void HandleHit(Actor hitSubject, Actor hurtSubject, HitEventData evtData)
+    private void HandleHit(ActorOld hitSubject, ActorOld hurtSubject, HitEventData evtData)
     {
         if (hurtSubject.TryGetComponent(out ActorHealth health))
         {

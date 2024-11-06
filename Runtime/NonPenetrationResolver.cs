@@ -6,8 +6,8 @@ public class NonPenetrationResolver : MonoBehaviour
 {
     [SerializeField] private float DistanceToPlayer = 32f;
 
-    private Actor _playerActor;
-    private readonly List<Actor> _queryBuffer = new();
+    private ActorOld _playerActorOld;
+    private readonly List<ActorOld> _queryBuffer = new();
     private readonly List<ActorNonPenetration> _toBeCorrect = new();
 
     private void FixedUpdate()
@@ -23,7 +23,7 @@ public class NonPenetrationResolver : MonoBehaviour
     private void Tick(float deltaTime)
     {
         // non-penetration constraint (only apply to actors near player)
-        _playerActor.FindActorCircle(DistanceToPlayer, _queryBuffer);
+        _playerActorOld.FindActorCircle(DistanceToPlayer, _queryBuffer);
         _toBeCorrect.Clear();
         foreach (var actor in _queryBuffer)
         {

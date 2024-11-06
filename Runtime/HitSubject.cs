@@ -44,7 +44,7 @@ public class HitSubject : MonoBehaviour
 #if UNITY_EDITOR
     private void Start()
     {
-        Debug.Assert(SystemManager.GetSystem<HitManager>());
+        // Debug.Assert(SystemManager.GetSystem<HitManager>());
     }
 #endif
 

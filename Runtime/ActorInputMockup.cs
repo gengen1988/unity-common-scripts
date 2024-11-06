@@ -2,21 +2,21 @@
 
 public class ActorInputMockup : MonoBehaviour
 {
-    private Actor _actor;
+    private ActorOld _actorOld;
 
     private void OnEnable()
     {
-        _actor = GetComponentInParent<Actor>();
-        _actor.OnPerceive += HandlePerceive;
+        _actorOld = GetComponentInParent<ActorOld>();
+        _actorOld.OnPerceive += HandlePerceive;
     }
 
     private void OnDisable()
     {
-        _actor.OnPerceive -= HandlePerceive;
+        _actorOld.OnPerceive -= HandlePerceive;
     }
 
-    private void HandlePerceive(Actor actor)
+    private void HandlePerceive(ActorOld actorOld)
     {
-        actor.Intent.SetVector2(IntentKey.Move, Vector2.right);
+        actorOld.Intent.SetVector2(IntentKey.Move, Vector2.right);
     }
 }

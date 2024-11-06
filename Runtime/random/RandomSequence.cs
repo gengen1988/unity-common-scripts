@@ -106,4 +106,18 @@ public class RandomSequence<T>
         IEnumerable<T> toBeMove = _library.FindAndTakeAll(criteria);
         _graveyard.AddRange(toBeMove);
     }
+
+    public static RandomSequence<T> FromDictionary(Dictionary<T, int> sequenceConfig)
+    {
+        var list = new List<T>();
+        foreach (var pair in sequenceConfig)
+        {
+            for (var i = 0; i < pair.Value; i++)
+            {
+                list.Add(pair.Key);
+            }
+        }
+
+        return new RandomSequence<T>(list);
+    }
 }

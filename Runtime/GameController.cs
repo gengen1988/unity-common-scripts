@@ -2,17 +2,17 @@
 
 public class GameController : SingletonBehaviour<GameController>
 {
-    public Actor PlayerPrefab;
+    public ActorOld PlayerPrefab;
 
-    private Actor _player;
+    private ActorOld _player;
 
-    public Actor CurrentPlayer => _player;
+    public ActorOld CurrentPlayer => _player;
 
     private void Update()
     {
         if (!_player)
         {
-            _player = Actor.Spawn(PlayerPrefab, Vector2.zero, Quaternion.identity);
+            _player = ActorOld.Spawn(PlayerPrefab, Vector2.zero, Quaternion.identity);
         }
     }
 

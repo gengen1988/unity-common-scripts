@@ -13,12 +13,12 @@ public class ActorBeam : MonoBehaviour
         hitManager.OnHit += HandleHit;
     }
 
-    private void HandleHit(Actor hitSubject, Actor hurtSubject, HitEventData evtData)
+    private void HandleHit(ActorOld hitSubject, ActorOld hurtSubject, HitEventData evtData)
     {
         throw new System.NotImplementedException();
     }
 
-    public void OnMove(Actor moveSubject, float localDeltaTime)
+    public void OnMove(ActorOld moveSubject, float localDeltaTime)
     {
         throw new System.NotImplementedException();
     }

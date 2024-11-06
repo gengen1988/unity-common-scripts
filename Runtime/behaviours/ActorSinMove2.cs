@@ -13,11 +13,11 @@ public class ActorSinMove2 : MonoBehaviour
     private void Awake()
     {
         TryGetComponent(out _rb);
-        TryGetComponent(out Actor actor);
+        TryGetComponent(out ActorOld actor);
         actor.OnMove += HandleMove;
     }
 
-    private void HandleMove(Actor moveSubject)
+    private void HandleMove(ActorOld moveSubject)
     {
         float phase = PhaseOctave * Mathf.PI * 2;
         float localDeltaTime = moveSubject.Timer.LocalDeltaTime;

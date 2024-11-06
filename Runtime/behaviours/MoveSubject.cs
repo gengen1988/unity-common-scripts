@@ -85,8 +85,8 @@ public class MoveSubject : MonoBehaviour
     private void Start()
     {
         // 检查是否缺少必要系统
-        Debug.Assert(SystemManager.GetSystem<MovementManager>());
-        Debug.Assert(_rb, "move subject requires RigidBody2D to work", this);
+        // Debug.Assert(SystemManager.GetSystem<MovementManager>());
+        // Debug.Assert(_rb, "move subject requires RigidBody2D to work", this);
         // Debug.Assert(_time, "move subject requires Timeline (Chronos) to work", this);
     }
 #endif

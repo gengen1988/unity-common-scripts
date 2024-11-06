@@ -8,7 +8,7 @@ public class ActorExplosion : MonoBehaviour
     [SerializeField] private LayerMask HurtLayerMask;
 
     private readonly List<Collider2D> _overlapBuffer = new();
-    private Actor _actor;
+    private ActorOld _actorOld;
 
     private void OnDrawGizmosSelected()
     {
@@ -17,8 +17,8 @@ public class ActorExplosion : MonoBehaviour
 
     private void Awake()
     {
-        TryGetComponent(out _actor);
-        _actor.OnPerceive += HandlePerceive;
+        TryGetComponent(out _actorOld);
+        _actorOld.OnPerceive += HandlePerceive;
     }
 
     private void OnEnable()
@@ -36,12 +36,12 @@ public class ActorExplosion : MonoBehaviour
         Physics2D.OverlapCircle(currentPosition, OverlapRadius, filter, _overlapBuffer);
         foreach (Collider2D col in _overlapBuffer)
         {
-            if (!col.TryGetActor(out Actor hurtSubject))
+            if (!col.TryGetActor(out ActorOld hurtSubject))
             {
                 continue;
             }
 
-            if (IFFTransponder.IsFriend(_actor, hurtSubject))
+            if (IFFTransponder.IsFriend(_actorOld, hurtSubject))
             {
                 continue;
             }
@@ -53,13 +53,13 @@ public class ActorExplosion : MonoBehaviour
                 ContactPoint = contactPoint,
                 HitVelocity = direction.normalized * ShockwaveSpeed,
             };
-            ActorHitManager.EnqueueHitEvent(_actor, hurtSubject, evt);
+            ActorHitManager.EnqueueHitEvent(_actorOld, hurtSubject, evt);
         }
     }
 
-    private void HandlePerceive(Actor actor)
+    private void HandlePerceive(ActorOld actorOld)
     {
         // despawn when first tick
-        actor.Kill();
+        actorOld.Kill();
     }
 }

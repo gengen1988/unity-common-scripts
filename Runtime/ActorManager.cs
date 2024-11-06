@@ -14,7 +14,7 @@ public partial class ActorManager : SingletonBehaviour<ActorManager>
 
     private class ManagedEntry
     {
-        public Actor Actor;
+        public ActorOld ActorOld;
         public ActorState State;
         public float ElapsedTime;
     }
@@ -22,7 +22,7 @@ public partial class ActorManager : SingletonBehaviour<ActorManager>
     private readonly List<ManagedEntry> _toBeTick = new(); // event scheduler
     private readonly List<ManagedEntry> _toBeBorn = new(); // event scheduler
     private readonly List<ManagedEntry> _toBeDie = new(); // event scheduler
-    private readonly Dictionary<Actor, ManagedEntry> _entryByActor = new(); // index that covers entire actor lifespan
+    private readonly Dictionary<ActorOld, ManagedEntry> _entryByActor = new(); // index that covers entire actor lifespan
 
     private void Start()
     {
@@ -30,12 +30,12 @@ public partial class ActorManager : SingletonBehaviour<ActorManager>
         // Debug.Assert(BehaviorManager.instance.UpdateInterval == UpdateIntervalType.Manual);
 
         // auto register actors in scene
-        Actor[] actorsAlreadyInScene = FindObjectsByType<Actor>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-        foreach (Actor actor in actorsAlreadyInScene)
+        ActorOld[] actorsAlreadyInScene = FindObjectsByType<ActorOld>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (ActorOld actor in actorsAlreadyInScene)
         {
             ManagedEntry entry = new ManagedEntry
             {
-                Actor = actor,
+                ActorOld = actor,
                 State = ActorState.Normal
             };
             _entryByActor[actor] = entry;
@@ -67,11 +67,11 @@ public partial class ActorManager : SingletonBehaviour<ActorManager>
             }
 
             // recycle
-            if (entry.ElapsedTime >= entry.Actor.DieTime)
+            if (entry.ElapsedTime >= entry.ActorOld.DieTime)
             {
                 _toBeDie.RemoveAt(i);
-                _entryByActor.Remove(entry.Actor);
-                PoolUtil.Despawn(entry.Actor.gameObject);
+                _entryByActor.Remove(entry.ActorOld);
+                PoolUtil.Despawn(entry.ActorOld.gameObject);
             }
 
             entry.ElapsedTime += deltaTime;
@@ -100,12 +100,12 @@ public partial class ActorManager : SingletonBehaviour<ActorManager>
             // trigger born event
             if (entry.ElapsedTime <= 0)
             {
-                StagingSystem.Commit(entry.Actor.gameObject); // event listen happened at this timing
+                StagingSystem.Commit(entry.ActorOld.gameObject); // event listen happened at this timing
                 // entry.Actor.Born();
             }
 
             // state transition
-            if (entry.ElapsedTime >= entry.Actor.BornTime)
+            if (entry.ElapsedTime >= entry.ActorOld.BornTime)
             {
                 _toBeBorn.RemoveAt(i);
                 _toBeTick.Add(entry);
@@ -117,40 +117,40 @@ public partial class ActorManager : SingletonBehaviour<ActorManager>
         }
     }
 
-    private Actor Spawn(GameObject actorPrefab, Vector3 position, Quaternion rotation, Transform parent)
+    private ActorOld Spawn(GameObject actorPrefab, Vector3 position, Quaternion rotation, Transform parent)
     {
         GameObject actorObject = StagingSystem.Prepare(
             t => PoolUtil.Spawn(actorPrefab, position, rotation, t),
             parent
         );
-        actorObject.TryGetComponent(out Actor actor);
+        actorObject.TryGetComponent(out ActorOld actor);
         ManagedEntry entry = new ManagedEntry
         {
-            Actor = actor,
+            ActorOld = actor,
             State = ActorState.Birth
         };
-        _entryByActor[entry.Actor] = entry;
+        _entryByActor[entry.ActorOld] = entry;
         _toBeBorn.Add(entry);
         return actor;
     }
 
-    private void Despawn(Actor actor)
+    private void Despawn(ActorOld actorOld)
     {
-        if (!actor)
+        if (!actorOld)
         {
             Debug.LogError("despawn null actor");
             return;
         }
 
-        if (!Instance._entryByActor.TryGetValue(actor, out ManagedEntry entry))
+        if (!Instance._entryByActor.TryGetValue(actorOld, out ManagedEntry entry))
         {
-            Debug.LogWarning("actor not found", actor);
+            Debug.LogWarning("actor not found", actorOld);
             return;
         }
 
         if (entry.State == ActorState.Dead)
         {
-            Debug.LogWarning("actor is already dead", actor);
+            Debug.LogWarning("actor is already dead", actorOld);
             return;
         }
 
@@ -163,7 +163,7 @@ public partial class ActorManager : SingletonBehaviour<ActorManager>
 // shortcuts
 public partial class ActorManager
 {
-    public static Actor SpawnActor(
+    public static ActorOld SpawnActor(
         GameObject actorPrefab,
         Vector3 position,
         Quaternion rotation,
@@ -173,29 +173,29 @@ public partial class ActorManager
         return Instance.Spawn(actorPrefab, position, rotation, parent);
     }
 
-    public static void DespawnActor(Actor actor)
+    public static void DespawnActor(ActorOld actorOld)
     {
-        Instance.Despawn(actor);
+        Instance.Despawn(actorOld);
     }
 
-    public static bool IsExists(Actor actor)
+    public static bool IsExists(ActorOld actorOld)
     {
-        if (!actor)
+        if (!actorOld)
         {
             return false;
         }
 
-        return Instance._entryByActor.ContainsKey(actor);
+        return Instance._entryByActor.ContainsKey(actorOld);
     }
 
-    public static bool IsAlive(Actor actor)
+    public static bool IsAlive(ActorOld actorOld)
     {
-        if (!actor)
+        if (!actorOld)
         {
             return false;
         }
 
-        if (!Instance._entryByActor.TryGetValue(actor, out ManagedEntry entry))
+        if (!Instance._entryByActor.TryGetValue(actorOld, out ManagedEntry entry))
         {
             return false;
         }

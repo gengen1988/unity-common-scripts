@@ -2,73 +2,136 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[DisallowMultipleComponent]
 public class Feedback : MonoBehaviour
 {
-    public event Action<Feedback> OnPlay, OnStop;
+    public event Action<Feedback> OnPlay;
+    public event Action<Feedback> OnStop;
+    public event Action<Feedback> OnClear;
 
-    [SerializeField] private float DefaultLifeTime = -1f;
+    [SerializeField] private float MaxActiveTime = -1f;
+    [SerializeField] private float MaxDespawningTime = -1f;
 
     private float _elapsedTime;
-    private readonly HashSet<Guid> _blockers = new();
+    private GameEntity _entity;
+    private readonly HashSet<Guid> _blocks = new();
+
+    public bool IsPlaying => _entity.CurrentState == EntityState.Active;
+
+    private void Awake()
+    {
+        TryGetComponent(out _entity);
+        _entity.OnSpawn += HandleSpawn;
+        _entity.OnKill += HandleKill;
+        _entity.OnTick += HandleTick;
+        _entity.OnFinish += HandleFinish;
+    }
 
     private void OnDestroy()
     {
         OnPlay = null;
         OnStop = null;
+        OnClear = null;
     }
 
-    private void Update()
+    private void HandleTick(GameEntity entity, float deltaTime)
     {
-        Tick(Time.deltaTime);
-    }
-
-    private void Tick(float deltaTime)
-    {
-        if (IsFinished())
+        switch (entity.CurrentState)
         {
-            PoolUtil.Despawn(gameObject);
+            case EntityState.Active:
+                TickActive(entity, deltaTime);
+                break;
+            case EntityState.Despawning:
+                TickDespawning(entity, deltaTime);
+                break;
+        }
+    }
+
+    private void TickActive(GameEntity entity, float deltaTime)
+    {
+        // forever
+        if (MaxActiveTime < 0)
+        {
             return;
         }
 
-        // timeout
-        if (DefaultLifeTime > 0 && _elapsedTime >= DefaultLifeTime)
+        // timeout, graceful stop
+        if (_elapsedTime >= MaxActiveTime)
         {
-            Stop(); // graceful stop
+            entity.SendKill();
             return;
         }
 
         _elapsedTime += deltaTime;
     }
 
-    private void Play()
+    private void TickDespawning(GameEntity entity, float deltaTime)
     {
+        // no longer blocked
+        if (_blocks.Count == 0)
+        {
+            entity.SendFinish();
+            return;
+        }
+
+        // force clear
+        if (MaxDespawningTime < 0 && _elapsedTime >= MaxDespawningTime)
+        {
+            _blocks.Clear();
+            return;
+        }
+
+        _elapsedTime += deltaTime;
+    }
+
+    private void HandleSpawn(GameEntity entity)
+    {
+        entity.SendReady(); // instant ready, do not wait for next frame, which means it can be killed right after spawn
+        _blocks.Clear();
+        _elapsedTime = 0;
         OnPlay?.Invoke(this);
     }
 
-    private void Stop()
+    private void HandleKill(GameEntity entity)
     {
+        _elapsedTime = 0;
+        if (MaxDespawningTime >= 0)
+        {
+            _blocks.Add(Guid.NewGuid());
+        }
+
         OnStop?.Invoke(this);
     }
 
-    private bool IsFinished()
+    private void HandleFinish(GameEntity entity)
     {
-        return _blockers.Count == 0;
+        OnClear?.Invoke(this);
     }
 
-    public Guid AcquireBlocker()
+    public Guid AcquireBlock()
     {
-        Guid id = Guid.NewGuid();
-        _blockers.Add(id);
-        return id;
+        var blockId = Guid.NewGuid();
+        _blocks.Add(blockId);
+        return blockId;
     }
 
-    public void ReleaseBlocker(Guid blockId)
+    public void ReleaseBlock(Guid blockId)
     {
-        _blockers.Remove(blockId);
+        _blocks.Remove(blockId);
     }
 
-    // static interfaces
+    public void Stop()
+    {
+        if (_entity.CurrentState == EntityState.Active)
+        {
+            _entity.SendKill();
+        }
+        else
+        {
+            Debug.LogWarning("Attempting to release an entity that is not active.");
+        }
+    }
+
+    // static shorthand
     public static Feedback Spawn(Feedback prefab, Vector3 position, Quaternion rotation, Transform parent = null)
     {
         if (!prefab)
@@ -76,11 +139,8 @@ public class Feedback : MonoBehaviour
             return null;
         }
 
-        var go = PoolUtil.Spawn(prefab.gameObject, position, rotation, parent);
+        var go = EntityManager.Instance.Spawn(prefab.gameObject, position, rotation, parent);
         go.TryGetComponent(out Feedback feedback);
-        feedback._blockers.Clear();
-        feedback._elapsedTime = 0;
-        feedback.Play();
         return feedback;
     }
 
@@ -91,32 +151,13 @@ public class Feedback : MonoBehaviour
         return Spawn(prefab, position, rotation, parent);
     }
 
-    public static void Despawn(Component component)
+    public static void Kill(Feedback feedback)
     {
-        if (!component)
+        if (!feedback)
         {
             return;
         }
 
-        if (component is Feedback feedback)
-        {
-            feedback.Stop();
-            return;
-        }
-
-        Despawn(component.gameObject);
-    }
-
-    public static void Despawn(GameObject instance)
-    {
-        if (!instance)
-        {
-            return;
-        }
-
-        if (instance.TryGetComponent(out Feedback feedback))
-        {
-            feedback.Stop();
-        }
+        EntityManager.Instance.Kill(feedback.gameObject);
     }
 }

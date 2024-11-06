@@ -12,7 +12,7 @@ public static class ActorUtil
 {
     private static readonly List<Collider2D> _queryBuffer = new();
 
-    public static bool TryGetActor(this Collider2D col, out Actor actor)
+    public static bool TryGetActor(this Collider2D col, out ActorOld actorOld)
     {
         Component from = col;
         if (col.attachedRigidbody)
@@ -20,19 +20,19 @@ public static class ActorUtil
             from = col.attachedRigidbody;
         }
 
-        return from.TryGetComponent(out actor);
+        return from.TryGetComponent(out actorOld);
     }
 
-    public static int FindActorCircle(this Actor actor, float radius, List<Actor> results)
+    public static int FindActorCircle(this ActorOld actorOld, float radius, List<ActorOld> results)
     {
-        return FindActorArc(actor, Vector2.right, 360f, radius, results);
+        return FindActorArc(actorOld, Vector2.right, 360f, radius, results);
     }
 
-    public static int FindActorArc(this Actor actor, Vector2 from, float angle, float radius, List<Actor> results)
+    public static int FindActorArc(this ActorOld actorOld, Vector2 from, float angle, float radius, List<ActorOld> results)
     {
         results.Clear();
         var sqrRadius = radius * radius;
-        var actorTransform = actor.transform;
+        var actorTransform = actorOld.transform;
         var center = actorTransform.position;
         var filter = new ContactFilter2D
         {
@@ -91,7 +91,7 @@ public static class ActorUtil
 
         var rb = gameObject.EnsureComponent<Rigidbody2D>();
         rb.bodyType = RigidbodyType2D.Kinematic;
-        gameObject.EnsureComponent<Actor>();
+        gameObject.EnsureComponent<ActorOld>();
         var brainTrans = gameObject.transform.EnsureChild("Brain");
         brainTrans.EnsureComponent<Brain>();
 

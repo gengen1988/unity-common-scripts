@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿#if ENABLE_INPUT_SYSTEM
+using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class BrainInput : MonoBehaviour
@@ -23,8 +24,8 @@ public class BrainInput : MonoBehaviour
     private void Awake()
     {
         TryGetComponent(out Brain brain);
-        brain.OnMount += HandleMount;
-        brain.OnUnmount += HandleUnmount;
+        // brain.OnMount += HandleMount;
+        // brain.OnUnmount += HandleUnmount;
     }
 
     private void Update()
@@ -48,68 +49,68 @@ public class BrainInput : MonoBehaviour
 
     private void HandleMount(Actor actor)
     {
-        _playerManager = PlayerInputManager.instance;
-        if (_playerManager.playerCount > 0)
-        {
-            Init(PlayerInput.GetPlayerByIndex(0));
-        }
-
-        _playerManager.onPlayerJoined += HandlePlayerJoined;
-        _playerManager.onPlayerLeft += HandlerPlayerLeft;
-        actor.OnPerceive += HandlePerceive;
+        // _playerManager = PlayerInputManager.instance;
+        // if (_playerManager.playerCount > 0)
+        // {
+        //     Init(PlayerInput.GetPlayerByIndex(0));
+        // }
+        //
+        // _playerManager.onPlayerJoined += HandlePlayerJoined;
+        // _playerManager.onPlayerLeft += HandlerPlayerLeft;
+        // actor.OnPerceive += HandlePerceive;
     }
 
     private void HandleUnmount(Actor actor)
     {
-        actor.OnPerceive -= HandlePerceive;
-        _playerManager.onPlayerJoined -= HandlePlayerJoined;
-        _playerManager.onPlayerLeft -= HandlerPlayerLeft;
+        // actor.OnPerceive -= HandlePerceive;
+        // _playerManager.onPlayerJoined -= HandlePlayerJoined;
+        // _playerManager.onPlayerLeft -= HandlerPlayerLeft;
     }
 
 
     private void HandlePerceive(Actor actor)
     {
-        if (!_player)
-        {
-            return;
-        }
-
-        // move
-        actor.Intent.SetVector2(IntentKey.Move, _moveAction.ReadValue<Vector2>());
-
-        // mouse look 2d
-        var aim = Vector2.zero;
-        if (MouseLookCenter)
-        {
-            var mousePosition = UnityUtil.GetMousePositionWorld();
-            var center = (Vector2)MouseLookCenter.position;
-            var los = mousePosition - center;
-            if (los.magnitude >= MouseLookDeadZone)
-            {
-                aim = los.normalized;
-            }
-        }
-        // gamepad look
-        else
-        {
-            aim = _aimAction.ReadValue<Vector2>();
-        }
-
-        actor.Intent.SetVector2(IntentKey.Look, aim);
-
-        // fire
-        if (_fire)
-        {
-            actor.Intent.SetBool(IntentKey.Fire, true);
-            _fire = false;
-        }
-
-        // jump
-        if (_jump)
-        {
-            actor.Intent.SetBool(IntentKey.Jump, true);
-            _jump = false;
-        }
+        // if (!_player)
+        // {
+        //     return;
+        // }
+        //
+        // // move
+        // actor.Intent.SetVector2(IntentKey.Move, _moveAction.ReadValue<Vector2>());
+        //
+        // // mouse look 2d
+        // var aim = Vector2.zero;
+        // if (MouseLookCenter)
+        // {
+        //     var mousePosition = UnityUtil.GetMousePositionWorld();
+        //     var center = (Vector2)MouseLookCenter.position;
+        //     var los = mousePosition - center;
+        //     if (los.magnitude >= MouseLookDeadZone)
+        //     {
+        //         aim = los.normalized;
+        //     }
+        // }
+        // // gamepad look
+        // else
+        // {
+        //     aim = _aimAction.ReadValue<Vector2>();
+        // }
+        //
+        // actor.Intent.SetVector2(IntentKey.Look, aim);
+        //
+        // // fire
+        // if (_fire)
+        // {
+        //     actor.Intent.SetBool(IntentKey.Fire, true);
+        //     _fire = false;
+        // }
+        //
+        // // jump
+        // if (_jump)
+        // {
+        //     actor.Intent.SetBool(IntentKey.Jump, true);
+        //     _jump = false;
+        // }
     }
 
     private void HandlePlayerJoined(PlayerInput playerInput)
@@ -140,3 +141,5 @@ public class BrainInput : MonoBehaviour
         _fireAction = _player.actions.FindAction(Fire, true);
     }
 }
+
+#endif

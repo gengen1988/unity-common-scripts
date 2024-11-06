@@ -7,15 +7,15 @@ public class Brain : MonoBehaviour
 
     [SerializeField] private bool MountOnStart = true;
 
-    private Actor _owner;
+    private ActorOld _owner;
 
-    public Actor Owner => _owner;
+    public ActorOld Owner => _owner;
 
     private void Start()
     {
         if (MountOnStart)
         {
-            var actor = GetComponentInParent<Actor>();
+            var actor = GetComponentInParent<ActorOld>();
             Mount(actor);
         }
     }
@@ -26,15 +26,15 @@ public class Brain : MonoBehaviour
         OnUnmount = null;
     }
 
-    public void Mount(Actor actor)
+    public void Mount(ActorOld actorOld)
     {
-        _owner = actor;
-        OnMount?.Invoke(actor);
+        _owner = actorOld;
+        OnMount?.Invoke(actorOld);
     }
 
-    public void Unmount(Actor actor)
+    public void Unmount(ActorOld actorOld)
     {
-        OnUnmount?.Invoke(actor);
+        OnUnmount?.Invoke(actorOld);
         _owner = null;
     }
 }

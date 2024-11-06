@@ -16,11 +16,11 @@ public class ActorNonPenetration : MonoBehaviour
     private void Awake()
     {
         TryGetComponent(out _rb);
-        TryGetComponent(out Actor actor);
+        TryGetComponent(out ActorOld actor);
         actor.OnPerceive += HandlePerceive;
     }
 
-    private void HandlePerceive(Actor actor)
+    private void HandlePerceive(ActorOld actorOld)
     {
         // prepare
         _placementPosition = transform.position;

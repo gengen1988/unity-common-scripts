@@ -67,9 +67,9 @@ public class HealthGUIManager : MonoBehaviour, IComponentManager<ActorHealth>
         bar.SetAlpha(ratio < 1 ? 1 : 0);
     }
 
-    private void HandleDamage(Actor actor, int damage)
+    private void HandleDamage(ActorOld actorOld, int damage)
     {
-        Transform trans = actor.transform;
+        Transform trans = actorOld.transform;
         GameObject damageNumberObject = PoolUtil.Spawn(DamageNumberPrefab, trans.position, trans.rotation);
         damageNumberObject.TryGetComponent(out DamageNumber damageNumber);
         damageNumber.Init(damage);

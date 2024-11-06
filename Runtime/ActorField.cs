@@ -22,12 +22,12 @@ public class ActorField : MonoBehaviour
 
     private void Awake()
     {
-        TryGetComponent(out Actor actor);
+        TryGetComponent(out ActorOld actor);
         TryGetComponent(out _hitManager);
         actor.OnMove += HandleMove;
     }
 
-    private void HandleMove(Actor hitSubject)
+    private void HandleMove(ActorOld hitSubject)
     {
         if (_hitManager.IsCooldown())
         {

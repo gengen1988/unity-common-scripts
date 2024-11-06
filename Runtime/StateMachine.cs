@@ -23,9 +23,14 @@ public class StateMachine<TContext>
         TransitionTo(_previousState);
     }
 
-    public void SendMessage(string message = null)
+    public void Tick(float deltaTime)
     {
-        _currentState?.OnMessage(_context, message);
+        _currentState?.Tick(_context, deltaTime);
+    }
+
+    public void SendEvent<T>(T gameEvent) where T : GameEvent
+    {
+        _currentState?.OnEvent(_context, gameEvent);
     }
 
     public IState<TContext> GetCurrentState()
@@ -46,12 +51,13 @@ public class StateMachine<TContext>
 
 public interface IState<in TContext>
 {
-    public void OnEnter(TContext ctx);
-    public void OnExit(TContext ctx);
-    public void OnMessage(TContext ctx, string message);
+    void OnEnter(TContext ctx);
+    void OnExit(TContext ctx);
+    void OnEvent(TContext ctx, GameEvent evt);
+    void Tick(TContext ctx, float deltaTime);
 }
 
-public abstract class State<TContext, TState> : Singleton<TState>, IState<TContext> where TState : class, new()
+public abstract class State<TContext, TState> : Singleton<TState>, IState<TContext> where TState : Singleton<TState>, new()
 {
     public virtual void OnEnter(TContext ctx)
     {
@@ -61,7 +67,11 @@ public abstract class State<TContext, TState> : Singleton<TState>, IState<TConte
     {
     }
 
-    public virtual void OnMessage(TContext ctx, string message)
+    public virtual void OnEvent(TContext ctx, GameEvent evt)
+    {
+    }
+
+    public virtual void Tick(TContext ctx, float deltaTime)
     {
     }
 }

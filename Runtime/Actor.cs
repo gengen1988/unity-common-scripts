@@ -1,165 +1,100 @@
 ﻿using UnityEngine;
 
-public delegate void ActorEvent(Actor actor);
-
-public class Actor : StatefulBehaviour<Actor>
+public class Actor : MonoBehaviour
 {
-    private const string MESSAGE_KILL = "kill";
+    [SerializeField] private float SpawnTime;
+    [SerializeField] private float DespawnTime;
 
-    public event ActorEvent OnReady;
-    public event ActorEvent OnPerceive;
-    public event ActorEvent OnControl;
-    public event ActorEvent OnMove;
-    public event ActorEvent OnDie;
-
-    [SerializeField] private float DefaultBornTime;
-    [SerializeField] private float DefaultDieTime;
-    [SerializeField] private Vector2 CenterOffset;
+    [Header("Feedbacks")] [SerializeField] private Feedback FeedbackOnSpawn;
 
     private float _elapsedTime;
 
-    // components
-    private readonly ActorIntent _intent = new();
-    private readonly ActorTimer _timer = new();
-
-    public Vector2 CenterPosition => (Vector2)transform.position + CenterOffset;
-    public ActorTimer Timer => _timer;
-    public ActorIntent Intent => _intent;
-    public float BornTime => DefaultBornTime;
-    public float DieTime => DefaultDieTime;
-
-    private void Start()
+    private void Awake()
     {
-        // in scene actors are normal and skip born
-        if (StateMachine.GetCurrentState() == null)
+        TryGetComponent(out GameEntity entity);
+        entity.OnTick += HandleTick;
+        entity.OnSpawn += HandleSpawn;
+        entity.OnReady += HandleReady;
+        entity.OnKill += HandleKill;
+    }
+
+    private void HandleSpawn(GameEntity entity)
+    {
+        _elapsedTime = 0;
+        gameObject.SetActive(false);
+        Feedback.Spawn(FeedbackOnSpawn);
+    }
+
+    private void HandleReady(GameEntity entity)
+    {
+        gameObject.SetActive(true);
+    }
+
+    private void HandleKill(GameEntity entity)
+    {
+        _elapsedTime = 0;
+    }
+
+    private void HandleTick(GameEntity entity, float deltaTime)
+    {
+        switch (entity.CurrentState)
         {
-            StateMachine.TransitionTo(Normal.Instance);
+            case EntityState.Spawning:
+                TickSpawning(entity, deltaTime);
+                break;
+            case EntityState.Despawning:
+                TickDespawning(entity, deltaTime);
+                break;
         }
     }
 
-    private void FixedUpdate()
+    private void TickSpawning(GameEntity entity, float deltaTime)
     {
-        StateMachine.SendMessage();
+        if (_elapsedTime >= SpawnTime)
+        {
+            entity.SendReady();
+            return;
+        }
+
+        _elapsedTime += deltaTime;
     }
 
-    private void OnDestroy()
+    private void TickDespawning(GameEntity entity, float deltaTime)
     {
-        OnReady = null;
-        OnPerceive = null;
-        OnControl = null;
-        OnMove = null;
-        OnDie = null;
+        if (_elapsedTime >= DespawnTime)
+        {
+            entity.SendFinish();
+            return;
+        }
+
+        _elapsedTime += deltaTime;
     }
 
-    public void Kill()
-    {
-        StateMachine.SendMessage(MESSAGE_KILL);
-    }
-
-    // static interface
-    public static Actor Spawn(Actor prefab, Vector2 position, Quaternion rotation)
+    // static shorthands
+    public static Actor Spawn(Actor prefab, Vector3 position, Quaternion rotation)
     {
         if (!prefab)
         {
             return null;
         }
 
-        var go = PoolUtil.Spawn(prefab.gameObject, position, rotation);
+        var go = EntityManager.Instance.Spawn(prefab.gameObject, position, rotation);
         go.TryGetComponent(out Actor actor);
-        actor.StateMachine.TransitionTo(Born.Instance);
         return actor;
     }
 
-    public static void Despawn(Actor actor)
+    public static void Kill(Actor actor)
     {
         if (!actor)
         {
             return;
         }
 
-        actor.Kill();
+        EntityManager.Instance.Kill(actor.gameObject);
     }
 
     public static bool IsAlive(Actor actor)
     {
-        return actor.StateMachine.GetCurrentState() == Normal.Instance;
-    }
-
-    private class Born : State<Actor, Born>
-    {
-        public override void OnEnter(Actor ctx)
-        {
-            ctx._elapsedTime = 0;
-        }
-
-        public override void OnMessage(Actor ctx, string message)
-        {
-            if (ctx._elapsedTime >= ctx.DefaultBornTime)
-            {
-                ctx.StateMachine.TransitionTo(Normal.Instance);
-                return;
-            }
-
-            ctx._elapsedTime += Time.fixedDeltaTime;
-        }
-    }
-
-    private class Normal : State<Actor, Normal>
-    {
-        public override void OnEnter(Actor ctx)
-        {
-            ctx._timer.Cleanup();
-            ctx.OnReady?.Invoke(ctx);
-        }
-
-        public override void OnMessage(Actor ctx, string message)
-        {
-            if (message == MESSAGE_KILL)
-            {
-                ctx.StateMachine.TransitionTo(Died.Instance);
-                return;
-            }
-
-            var deltaTime = Time.fixedDeltaTime;
-            ctx._intent.Cleanup();
-            ctx._timer.Perceive(deltaTime);
-
-            // game logic
-            ctx.OnPerceive?.Invoke(ctx);
-            ctx.OnControl?.Invoke(ctx);
-            ctx.OnMove?.Invoke(ctx);
-        }
-    }
-
-    private class Died : State<Actor, Died>
-    {
-        public override void OnEnter(Actor ctx)
-        {
-            ctx._elapsedTime = 0;
-            ctx.OnDie?.Invoke(ctx);
-        }
-
-        public override void OnMessage(Actor ctx, string message)
-        {
-            if (ctx._elapsedTime >= ctx.DefaultDieTime)
-            {
-                PoolUtil.Despawn(ctx.gameObject);
-                return;
-            }
-
-            ctx._elapsedTime += Time.fixedDeltaTime;
-        }
+        throw new System.NotImplementedException();
     }
 }
-
-// /**
-//  * actor components shortcut
-//  */
-// public partial class Actor
-// {
-//     public ActorBuffManager BuffManager => TryGetComponent(out ActorBuffManager buffManager) ? buffManager : null;
-//     public ActorHealth Health => TryGetComponent(out ActorHealth health) ? health : null;
-//     public AttributeManager Attribute => TryGetComponent(out AttributeManager attribute) ? attribute : null;
-//     public ActorNonPenetration NonPenetration => TryGetComponent(out ActorNonPenetration movement) ? movement : null;
-//     public ActorHitManager HitManager => TryGetComponent(out ActorHitManager hit) ? hit : null;
-// }

@@ -3,19 +3,19 @@ using UnityEngine;
 
 public class ActorHealth : MonoBehaviour
 {
-    public event Action<Actor, int> OnDamage;
+    public event Action<ActorOld, int> OnDamage;
 
     public int DefaultHP = 100;
 
     private int _currentHP;
     private int _maxHP;
-    private Actor _actor;
+    private ActorOld _actorOld;
 
     public int CurrentHP => _currentHP;
 
     private void Awake()
     {
-        TryGetComponent(out _actor);
+        TryGetComponent(out _actorOld);
     }
 
     private void OnEnable()
@@ -45,10 +45,10 @@ public class ActorHealth : MonoBehaviour
     public void DealDamage(int damage)
     {
         _currentHP -= damage;
-        OnDamage?.Invoke(_actor, damage);
+        OnDamage?.Invoke(_actorOld, damage);
         if (_currentHP <= 0)
         {
-            _actor.Kill();
+            _actorOld.Kill();
         }
     }
 }

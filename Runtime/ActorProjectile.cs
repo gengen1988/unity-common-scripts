@@ -14,7 +14,7 @@ public class ActorProjectile : MonoBehaviour
     [SerializeField] private float HitstopTime = 0.1f;
     [SerializeField] private LayerMask HurtLayerMask;
 
-    [Header("Gameplay")] [SerializeField] private Actor ExplosionOnDie;
+    [Header("Gameplay")] [SerializeField] private ActorOld ExplosionOnDie;
     [SerializeField] private BuffProfile BuffOnHit;
 
     private float _lifeTime;
@@ -34,13 +34,13 @@ public class ActorProjectile : MonoBehaviour
     private void Awake()
     {
         TryGetComponent(out _rb);
-        TryGetComponent(out Actor actor);
+        TryGetComponent(out ActorOld actor);
         TryGetComponent(out _hitManager);
         actor.OnMove += HandleMove;
         _hitManager.OnHit += HandleHit;
     }
 
-    private void HandleHit(Actor hitSubject, Actor hurtSubject, HitEventData evtData)
+    private void HandleHit(ActorOld hitSubject, ActorOld hurtSubject, HitEventData evtData)
     {
         // hitstop
         hitSubject.Timer.ChangeTimeScale("hitstop", 0, HitstopTime);
@@ -50,7 +50,7 @@ public class ActorProjectile : MonoBehaviour
         _hitRemaining--;
     }
 
-    private void HandleMove(Actor moveSubject)
+    private void HandleMove(ActorOld moveSubject)
     {
         if (_lifeTime <= 0)
         {
@@ -94,7 +94,7 @@ public class ActorProjectile : MonoBehaviour
             // maybe sort before loop
             foreach (RaycastHit2D hit in _castBuffer)
             {
-                if (!hit.collider.TryGetActor(out Actor hurtSubject))
+                if (!hit.collider.TryGetActor(out ActorOld hurtSubject))
                 {
                     continue;
                 }
@@ -131,9 +131,9 @@ public class ActorProjectile : MonoBehaviour
         _lifeTime -= localDeltaTime;
     }
 
-    private void Die(Actor projectileActor)
+    private void Die(ActorOld projectileActorOld)
     {
-        if (!ActorManager.IsAlive(projectileActor))
+        if (!ActorManager.IsAlive(projectileActorOld))
         {
             Debug.LogError("projectile already died", this);
             return;
@@ -144,14 +144,14 @@ public class ActorProjectile : MonoBehaviour
         // gameplay
         if (ExplosionOnDie)
         {
-            Transform projectileTransform = projectileActor.transform;
+            Transform projectileTransform = projectileActorOld.transform;
             Vector2 position = projectileTransform.position;
             Quaternion rotation = projectileTransform.rotation;
-            Actor explosionActor = Actor.Spawn(ExplosionOnDie, position, rotation);
-            IFFTransponder.CopyIdentity(projectileActor, explosionActor);
+            ActorOld explosionActorOld = ActorOld.Spawn(ExplosionOnDie, position, rotation);
+            IFFTransponder.CopyIdentity(projectileActorOld, explosionActorOld);
         }
 
-        ActorManager.DespawnActor(projectileActor);
+        ActorManager.DespawnActor(projectileActorOld);
     }
 
     // 不能记录 shooter。比方说有时可能 shooter 先死掉，然后 shooter 发射的子弹才命中敌人

@@ -13,7 +13,7 @@ public partial class StagingSystem : SingletonBehaviour<StagingSystem>
     private Transform _container;
     private readonly Dictionary<GameObject, Entry> _entryByGameObject = new();
 
-    protected override void AfterAwake()
+    protected override void UnityAwake()
     {
         GameObject go = new GameObject("StagingContainer");
         Transform trans = go.transform;

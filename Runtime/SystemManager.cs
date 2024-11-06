@@ -1,69 +1,90 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
-public class SystemManager : SingletonBehaviour<SystemManager>
+public abstract class GameSystem : MonoBehaviour
 {
-    private static class Cache<T> where T : Component
+    private void Start()
     {
-        public static T Value;
+        var evt = GameEventBus.AcquireEvent<OnSystemStart>();
+        evt.System = this;
+        GameEventBus.Publish(evt);
+    }
+}
+
+public class OnSystemStart : GameEvent
+{
+    public GameSystem System;
+}
+
+[Obsolete]
+public class SystemManager : Singleton<SystemManager>, IDisposable
+{
+    private static class TypedCache<T> where T : GameSystem
+    {
+        public static T System;
     }
 
-    private readonly Dictionary<Type, Component> _systemByType = new();
+    private readonly Dictionary<Type, GameSystem> _systemByType = new();
 
-    protected override void AfterAwake()
+    public void Init()
     {
-        // register systems on this gameObject
-        RegisterGameObject(gameObject);
+        GameEventBus.Subscribe<OnSystemStart>(HandleSystemStart);
     }
 
-    public static void RegisterGameObject(GameObject go)
+    public void Dispose()
     {
-        if (!Instance)
-        {
-            Debug.LogError("not ready");
-            return;
-        }
-
-        Dictionary<Type, Component> index = Instance._systemByType;
-        MonoBehaviour[] behaviours = go.GetComponents<MonoBehaviour>();
-        foreach (MonoBehaviour behaviour in behaviours)
-        {
-            Type systemType = behaviour.GetType();
-            if (index.ContainsKey(systemType))
-            {
-                Debug.LogError($"{systemType} should not has more than one instance", go);
-            }
-            else
-            {
-                index[systemType] = behaviour;
-            }
-        }
+        GameEventBus.Unsubscribe<OnSystemStart>(HandleSystemStart);
     }
 
-    public static T GetSystem<T>() where T : Component
+    private void HandleSystemStart(OnSystemStart evt)
     {
-        if (!Instance)
-        {
-            Debug.LogError("no system manager instance found");
-            return null;
-        }
+        _systemByType.Add(evt.System.GetType(), evt.System);
+    }
 
+    // public static void RegisterGameObject(GameObject go)
+    // {
+    //     if (!Instance)
+    //     {
+    //         Debug.LogError("not ready");
+    //         return;
+    //     }
+    //
+    //     Dictionary<Type, GameSystem> index = Instance._systemByType;
+    //     MonoBehaviour[] behaviours = go.GetComponents<MonoBehaviour>();
+    //     foreach (MonoBehaviour behaviour in behaviours)
+    //     {
+    //         Type systemType = behaviour.GetType();
+    //         if (index.ContainsKey(systemType))
+    //         {
+    //             Debug.LogError($"{systemType} should not has more than one instance", go);
+    //         }
+    //         else
+    //         {
+    //             index[systemType] = behaviour;
+    //         }
+    //     }
+    // }
+
+    public T GetSystem<T>() where T : GameSystem
+    {
         // cache to bypass alloc
-        T cachedValue = Cache<T>.Value;
+        var cachedValue = TypedCache<T>.System;
         if (cachedValue)
         {
             return cachedValue;
         }
 
-        // refresh cache
-        if (!Instance._systemByType.TryGetValue(typeof(T), out Component spawned))
+        // retrieve
+        if (!_systemByType.TryGetValue(typeof(T), out var system))
         {
             Debug.LogError($"someone require {typeof(T)} to work");
         }
 
-        T newValue = spawned as T;
-        Cache<T>.Value = newValue;
+        // refresh cache
+        var newValue = system as T;
+        TypedCache<T>.System = newValue;
         return newValue;
     }
 }
