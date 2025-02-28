@@ -4,6 +4,7 @@ using UnityEngine;
 [GameFrameOrder(-10)] // before actor tick itself (inner module logic)
 public class ActorBuffManager : MonoBehaviour, IEntityAttach, IEntityFrame
 {
+    #if UNUSED
     private Actor _actor;
 
     private readonly LinkedList<Buff> _buffs = new();
@@ -153,5 +154,15 @@ public static class BuffExtensions
         }
 
         return buffManager.AddBuff(buffKey);
+    }
+#endif
+    public void OnEntityAttach(GameEntity entity)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public void OnEntityFrame(GameEntity entity)
+    {
+        throw new System.NotImplementedException();
     }
 }

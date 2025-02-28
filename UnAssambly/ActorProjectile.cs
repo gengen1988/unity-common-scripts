@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using Weaver;
 
 public class ActorProjectile : MonoBehaviour
 {
@@ -12,7 +11,7 @@ public class ActorProjectile : MonoBehaviour
     [SerializeField] private float KnockbackForce = 10f;
     [SerializeField] private int CastCount = 1;
     [SerializeField] private float CastWidth;
-    [SerializeField] private LayerMask HurtLayerMask = Layers.HurtboxMask;
+    [SerializeField] private LayerMask HurtLayerMask; // Layers.HurtboxMask;
 
     [Header("Gameplay")]
     [SerializeField] private Actor ExplosionOnDie;

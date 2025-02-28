@@ -17,22 +17,27 @@ public abstract class WeaverSingletonBehaviour<T> : MonoBehaviour where T : Weav
             // 2. re-enter play mode when not reload domain
             if (!_instance)
             {
-                var singletonType = typeof(T);
-                var prefabField = singletonType.GetField("SingletonPrefab", ReflectionUtilities.StaticBindings);
-                var prefab = prefabField?.GetValue(null) as T;
+                var prefab = GetPrefab();
                 if (!prefab)
                 {
-                    Debug.LogAssertion($"please add a SingletonPrefab field to {singletonType}");
+                    Debug.LogAssertion($"please add static SingletonPrefab field to {typeof(T)}");
                     return null;
                 }
 
                 _instance = Instantiate(prefab);
                 DontDestroyOnLoad(_instance);
-                Debug.Log($"Singleton {singletonType} Instantiated", _instance);
+                Debug.Log($"Singleton {typeof(T)} Instantiated", _instance);
             }
 
             return _instance;
         }
+    }
+
+    private static T GetPrefab()
+    {
+        var prefabField = typeof(T).GetField("SingletonPrefab", ReflectionUtilities.StaticBindings);
+        var prefab = prefabField?.GetValue(null) as T;
+        return prefab;
     }
 
     public void Touch()

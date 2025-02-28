@@ -14,7 +14,7 @@ public class HurtFlash : MonoBehaviour
 
     public void Execute()
     {
-        var anime = _animancer.Layers[AnimancerLayers.HIT_EFFECTS].Play(HurtFlashAnimation);
-        anime.Time = 0; // always restart
+        // var anime = _animancer.Layers[AnimancerLayers.HIT_EFFECTS].Play(HurtFlashAnimation);
+        // anime.Time = 0; // always restart
     }
 }

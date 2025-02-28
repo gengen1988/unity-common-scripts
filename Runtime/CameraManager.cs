@@ -1,14 +1,18 @@
 using Cinemachine;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Weaver;
 
 public class CameraManager : WeaverSingletonBehaviour<CameraManager>
 {
     [AssetReference] private static readonly CameraManager SingletonPrefab;
 
-    [SerializeField] private CinemachineConfiner2D CameraConfiner;
-    [SerializeField] private CinemachineVirtualCamera VirtualCamera;
-    [SerializeField] private CinemachineTargetGroup TargetGroup;
+    [FormerlySerializedAs("CameraConfiner")] [SerializeField]
+    private CinemachineConfiner2D cameraConfiner;
+    [FormerlySerializedAs("VirtualCamera")] [SerializeField]
+    private CinemachineVirtualCamera virtualCamera;
+    [FormerlySerializedAs("TargetGroup")] [SerializeField]
+    private CinemachineTargetGroup targetGroup;
 
     private Camera _mainCamera;
 
@@ -27,31 +31,31 @@ public class CameraManager : WeaverSingletonBehaviour<CameraManager>
         }
 
         var shape = stage.BoundingShape;
-        CameraConfiner.m_BoundingShape2D = shape;
+        cameraConfiner.m_BoundingShape2D = shape;
     }
 
     public void SetCameraPosition(Vector2 position)
     {
-        VirtualCamera.transform.position = position;
+        virtualCamera.transform.position = position;
     }
 
     public void SetFollowTarget(Transform target, float weight = 1f, float radius = 5f)
     {
         // clear
-        foreach (var targetInGroup in TargetGroup.m_Targets)
+        foreach (var targetInGroup in targetGroup.m_Targets)
         {
-            TargetGroup.RemoveMember(targetInGroup.target);
+            targetGroup.RemoveMember(targetInGroup.target);
         }
 
         // add new
-        TargetGroup.AddMember(target, weight, radius);
+        targetGroup.AddMember(target, weight, radius);
 
         // reset cache
-        CameraConfiner.InvalidateCache();
+        cameraConfiner.InvalidateCache();
     }
 
     public void SetBoundingShape(Collider2D col)
     {
-        CameraConfiner.m_BoundingShape2D = col;
+        cameraConfiner.m_BoundingShape2D = col;
     }
 }
