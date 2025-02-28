@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 
 /**
- * similar to ILookup but can add after construct
+ * similar to ILookup but can be modified
  */
 public class DictionaryList<TKey, TValue>
 {
@@ -10,17 +10,12 @@ public class DictionaryList<TKey, TValue>
     private readonly List<TKey> _toBeRemove = new();
 
     public Dictionary<TKey, LinkedList<TValue>>.KeyCollection Keys => _dic.Keys;
-    public Dictionary<TKey, LinkedList<TValue>>.ValueCollection Values => _dic.Values;
 
-    public LinkedList<TValue> this[TKey key]
-    {
-        get => _dic[key];
-        set => _dic[key] = value;
-    }
+    public LinkedList<TValue> this[TKey key] => _dic[key];
 
     public void Add(TKey key, TValue value)
     {
-        if (!_dic.TryGetValue(key, out LinkedList<TValue> list))
+        if (!_dic.TryGetValue(key, out var list))
         {
             list = new LinkedList<TValue>();
             _dic[key] = list;
@@ -29,19 +24,19 @@ public class DictionaryList<TKey, TValue>
         list.AddLast(value);
     }
 
-    public bool Remove(TKey key)
+    public bool RemoveKey(TKey key)
     {
         return _dic.Remove(key);
     }
 
-    public bool Remove(TKey key, TValue value)
+    public bool RemoveValue(TKey key, TValue value)
     {
-        if (!_dic.TryGetValue(key, out LinkedList<TValue> list))
+        if (!_dic.TryGetValue(key, out var list))
         {
             return false;
         }
 
-        bool removed = list.Remove(value);
+        var removed = list.Remove(value);
         if (list.Count == 0)
         {
             _dic.Remove(key);
@@ -53,7 +48,7 @@ public class DictionaryList<TKey, TValue>
     public void RemoveAll(Predicate<TKey> match)
     {
         _toBeRemove.Clear();
-        foreach (TKey key in _dic.Keys)
+        foreach (var key in _dic.Keys)
         {
             if (match(key))
             {
@@ -61,7 +56,7 @@ public class DictionaryList<TKey, TValue>
             }
         }
 
-        foreach (TKey key in _toBeRemove)
+        foreach (var key in _toBeRemove)
         {
             _dic.Remove(key);
         }
@@ -70,15 +65,11 @@ public class DictionaryList<TKey, TValue>
     public void Clear()
     {
         _dic.Clear();
+        _toBeRemove.Clear();
     }
 
     public bool ContainsKey(TKey key)
     {
         return _dic.ContainsKey(key);
-    }
-
-    public bool ContainsValue(TKey key, TValue value)
-    {
-        return _dic.TryGetValue(key, out LinkedList<TValue> valueSet) && valueSet.Contains(value);
     }
 }

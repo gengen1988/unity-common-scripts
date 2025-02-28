@@ -3,12 +3,13 @@
 public abstract class SingletonBehaviour<T> : MonoBehaviour where T : SingletonBehaviour<T>
 {
     private static T _instance;
+    private static bool _isQuitting;
 
     public static T Instance
     {
         get
         {
-            if (_instance == null)
+            if (_instance == null && !_isQuitting)
             {
                 Debug.LogAssertion($"{typeof(T)} has not been instantiated.");
             }
@@ -25,26 +26,15 @@ public abstract class SingletonBehaviour<T> : MonoBehaviour where T : SingletonB
         }
 
         _instance = this as T;
-        GameEventBus.Subscribe<OnFrameworkInit>(HandleFrameworkInit);
         UnityAwake();
-        DontDestroyOnLoad(this);
     }
 
-    private void OnDestroy()
+    private void OnApplicationQuit()
     {
-        GameEventBus.Unsubscribe<OnFrameworkInit>(HandleFrameworkInit);
-        UnityOnDestroy();
+        _isQuitting = true;
     }
 
     protected virtual void UnityAwake()
-    {
-    }
-
-    protected virtual void UnityOnDestroy()
-    {
-    }
-
-    protected virtual void HandleFrameworkInit(OnFrameworkInit evt)
     {
     }
 }

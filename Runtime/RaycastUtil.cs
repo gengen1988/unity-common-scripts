@@ -3,6 +3,8 @@ using UnityEngine;
 
 public static class RaycastUtil
 {
+    private static readonly Dictionary<Collider2D, RaycastHit2D> WorkingMemory = new();
+
     /**
      * used in bullets with width
      */
@@ -13,8 +15,7 @@ public static class RaycastUtil
         Vector2 direction,
         ContactFilter2D filter,
         List<RaycastHit2D> results,
-        float distance,
-        Dictionary<Collider2D, RaycastHit2D> workingMemory
+        float distance
     )
     {
         if (Mathf.Approximately(castWidth, 0))
@@ -33,36 +34,36 @@ public static class RaycastUtil
         }
 
         // Perform a series of parallel raycasts and store the results
-        float halfWidth = castWidth / 2;
-        float spacing = castWidth / (rayCount - 1);
-        Vector2 normal = Vector2.Perpendicular(direction).normalized;
+        var halfWidth = castWidth / 2;
+        var spacing = castWidth / (rayCount - 1);
+        var normal = Vector2.Perpendicular(direction).normalized;
 
         // group by collider
-        workingMemory.Clear();
-        for (int i = 0; i < rayCount; i++)
+        WorkingMemory.Clear();
+        for (var i = 0; i < rayCount; i++)
         {
-            Vector2 rayOrigin = origin + normal * (spacing * i - halfWidth);
-            Physics2D.Raycast(rayOrigin, direction, filter, results, distance);
-            foreach (RaycastHit2D hit in results)
+            var rayOrigin = origin + normal * (spacing * i - halfWidth);
+            Physics2D.Raycast(rayOrigin, direction, filter, results, distance); // this will clear results
+            foreach (var hit in results)
             {
-                Collider2D collider = hit.collider;
-                if (workingMemory.TryGetValue(collider, out RaycastHit2D previousHit))
+                var collider = hit.collider;
+                if (WorkingMemory.TryGetValue(collider, out var previousHit))
                 {
                     if (previousHit.distance > hit.distance)
                     {
-                        workingMemory[collider] = hit;
+                        WorkingMemory[collider] = hit;
                     }
                 }
                 else
                 {
-                    workingMemory[collider] = hit;
+                    WorkingMemory[collider] = hit;
                 }
             }
         }
 
         // collect results
         results.Clear();
-        results.AddRange(workingMemory.Values);
+        results.AddRange(WorkingMemory.Values);
         return results.Count;
     }
 
@@ -93,14 +94,14 @@ public static class RaycastUtil
             return Physics2D.Raycast(origin, direction, distance, mask);
         }
 
-        float halfWidth = castWidth / 2;
-        float spacing = castWidth / (rayCount - 1);
-        Vector2 normal = Vector2.Perpendicular(direction).normalized;
+        var halfWidth = castWidth / 2;
+        var spacing = castWidth / (rayCount - 1);
+        var normal = Vector2.Perpendicular(direction).normalized;
         RaycastHit2D result = default;
-        for (int i = 0; i < rayCount; i++)
+        for (var i = 0; i < rayCount; i++)
         {
-            Vector2 rayOrigin = origin + normal * (spacing * i - halfWidth);
-            RaycastHit2D hit = Physics2D.Raycast(rayOrigin, direction, distance, mask);
+            var rayOrigin = origin + normal * (spacing * i - halfWidth);
+            var hit = Physics2D.Raycast(rayOrigin, direction, distance, mask);
 
 #if UNITY_EDITOR && DEBUG_DRAW
             Color debugColor = hit ? Color.red : Color.green;
@@ -133,18 +134,42 @@ public static class RaycastUtil
         Vector2 origin,
         int rayCount,
         float castWidth,
-        float characterRadius,
+        float extent,
         float shellThickness,
         Vector2 direction, // usually up or right
         float distance,
         LayerMask mask
     )
     {
-        float actualWidth = castWidth - 2 * shellThickness;
-        Vector2 actualOrigin = origin + direction.normalized * (characterRadius - shellThickness);
-        float actualDistance = distance + shellThickness;
-        RaycastHit2D hit = ParallelRaycast(actualOrigin, rayCount, actualWidth, direction, actualDistance, mask);
+        var actualWidth = castWidth - 2 * shellThickness;
+        var actualOrigin = origin + direction.normalized * (extent - shellThickness);
+        var actualDistance = distance + shellThickness;
+        var hit = ParallelRaycast(actualOrigin, rayCount, actualWidth, direction, actualDistance, mask);
         hit.distance -= shellThickness;
         return hit;
+    }
+
+    public static void DrawGizmosParallelRays(Vector3 center, int count, float width, Vector3 direction) // direction contains both direction and length
+    {
+        if (count < 1)
+        {
+            count = 1;
+        }
+
+        if (count == 1)
+        {
+            Gizmos.DrawLine(center, center + direction);
+            return;
+        }
+
+        var spacing = width / (count - 1);
+        var normal = Vector3.Cross(direction, Vector3.forward).normalized;
+        var halfWidth = width / 2;
+
+        for (var i = 0; i < count; i++)
+        {
+            var rayOrigin = center + normal * (spacing * i - halfWidth);
+            Gizmos.DrawLine(rayOrigin, rayOrigin + direction);
+        }
     }
 }

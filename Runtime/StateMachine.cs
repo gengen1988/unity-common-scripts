@@ -1,9 +1,20 @@
+using System.Collections.Generic;
+
 public class StateMachine<TContext>
 {
     private readonly TContext _context;
 
-    private IState<TContext> _previousState;
+    // private IState<TContext> _globalState;
     private IState<TContext> _currentState;
+    private IState<TContext> _previousState;
+
+    private readonly Dictionary<string, IState<TContext>> _transitionTable = new();
+
+    public IState<TContext> CurrentState
+    {
+        get => _currentState;
+        set => _currentState = value;
+    }
 
     public StateMachine(TContext context)
     {
@@ -12,9 +23,11 @@ public class StateMachine<TContext>
 
     public void TransitionTo(IState<TContext> nextState)
     {
-        _currentState?.OnExit(_context);
-        _previousState = _currentState;
+        var currentState = _currentState;
         _currentState = nextState;
+        _previousState = currentState;
+        _transitionTable.Clear();
+        currentState?.OnExit(_context);
         nextState?.OnEnter(_context);
     }
 
@@ -23,29 +36,38 @@ public class StateMachine<TContext>
         TransitionTo(_previousState);
     }
 
-    public void Tick(float deltaTime)
+    public void Refresh()
     {
-        _currentState?.Tick(_context, deltaTime);
+        // _globalState?.OnRefresh(_context);
+        _currentState?.OnRefresh(_context);
     }
 
-    public void SendEvent<T>(T gameEvent) where T : GameEvent
+    public void Send(string message)
     {
-        _currentState?.OnEvent(_context, gameEvent);
-    }
+        if (!_transitionTable.TryGetValue(message, out var state))
+        {
+            return;
+        }
 
-    public IState<TContext> GetCurrentState()
-    {
-        return _currentState;
-    }
-
-    public void SetCurrentState(IState<TContext> state)
-    {
-        _currentState = state;
+        TransitionTo(state);
     }
 
     public void SetPreviousState(IState<TContext> state)
     {
         _previousState = state;
+    }
+
+    // public void SetGlobalState(IState<TContext> nextState)
+    // {
+    //     var currentState = _globalState;
+    //     _globalState = nextState;
+    //     currentState?.OnExit(_context);
+    //     nextState?.OnEnter(_context);
+    // }
+
+    public void RegisterTransition(string message, IState<TContext> state)
+    {
+        _transitionTable.Add(message, state);
     }
 }
 
@@ -53,11 +75,11 @@ public interface IState<in TContext>
 {
     void OnEnter(TContext ctx);
     void OnExit(TContext ctx);
-    void OnEvent(TContext ctx, GameEvent evt);
-    void Tick(TContext ctx, float deltaTime);
+    void OnRefresh(TContext ctx);
 }
 
-public abstract class State<TContext, TState> : Singleton<TState>, IState<TContext> where TState : Singleton<TState>, new()
+public abstract class State<TContext, TState> : Singleton<TState>, IState<TContext>
+    where TState : Singleton<TState>, new()
 {
     public virtual void OnEnter(TContext ctx)
     {
@@ -67,11 +89,7 @@ public abstract class State<TContext, TState> : Singleton<TState>, IState<TConte
     {
     }
 
-    public virtual void OnEvent(TContext ctx, GameEvent evt)
-    {
-    }
-
-    public virtual void Tick(TContext ctx, float deltaTime)
+    public virtual void OnRefresh(TContext ctx)
     {
     }
 }

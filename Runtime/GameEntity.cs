@@ -1,74 +1,29 @@
-﻿using System;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
-public class GameEntity : MonoBehaviour
+// just a plain object
+public class GameEntity
 {
-    public event Action<GameEntity, float> OnTick;
-    public event Action<GameEntity> OnSpawn;
-    public event Action<GameEntity> OnReady;
-    public event Action<GameEntity> OnKill;
-    public event Action<GameEntity> OnFinish;
+}
 
-    private EntityState _state = EntityState.Inactive;
-
-    public EntityState CurrentState => _state;
-
-    private void OnDestroy()
+public static class GameEntityUtil
+{
+    public static bool IsAlive(this GameEntity entity)
     {
-        OnTick = null;
-        OnSpawn = null;
-        OnReady = null;
-        OnKill = null;
-        OnFinish = null;
+        return GameWorld.Instance.GetBridge(entity);
     }
 
-    public void Tick(float deltaTime)
+    public static GameEntityBridge FindEntityBridge(this Component component)
     {
-        OnTick?.Invoke(this, deltaTime);
+        return component.GetComponentInParent<GameEntityBridge>();
     }
 
-    public void SendSpawn()
+    public static GameEntity GetEntity(this GameObject gameObject)
     {
-        if (CurrentState != EntityState.Inactive)
-        {
-            return;
-        }
-
-        _state = EntityState.Spawning;
-        OnSpawn?.Invoke(this);
+        return GameWorld.Instance.GetEntity(gameObject);
     }
 
-    public void SendReady()
+    public static GameEntityBridge GetBridge(this GameEntity entity)
     {
-        if (CurrentState != EntityState.Spawning)
-        {
-            return;
-        }
-
-        _state = EntityState.Active;
-        OnReady?.Invoke(this);
-    }
-
-    public void SendKill()
-    {
-        if (CurrentState != EntityState.Active)
-        {
-            return;
-        }
-
-        _state = EntityState.Despawning;
-        OnKill?.Invoke(this);
-    }
-
-    public void SendFinish()
-    {
-        if (CurrentState != EntityState.Despawning)
-        {
-            return;
-        }
-
-        _state = EntityState.Inactive;
-        OnFinish?.Invoke(this);
+        return GameWorld.Instance.GetBridge(entity);
     }
 }

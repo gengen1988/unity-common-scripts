@@ -1,7 +1,7 @@
 ﻿public enum EntityState
 {
     Inactive,
-    Spawning,
     Active,
-    Despawning,
+    // Spawning,
+    // Despawning,
 }

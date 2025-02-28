@@ -3,11 +3,42 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using JetBrains.Annotations;
 using UnityEngine;
+
+[Serializable]
+public struct SerializablePair<TKey, TValue>
+{
+    public TKey Key;
+    public TValue Value;
+}
 
 public static class CollectionUtil
 {
+    public static RandomDeck<TKey> ToRandomSequence<TKey>(this IEnumerable<SerializablePair<TKey, int>> src)
+    {
+        if (src == null)
+        {
+            return null;
+        }
+
+        var list = new List<TKey>();
+        foreach (var pair in src)
+        {
+            for (var i = 0; i < pair.Value; i++)
+            {
+                list.Add(pair.Key);
+            }
+        }
+
+        return new RandomDeck<TKey>(list);
+    }
+
+    public static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(
+        this IEnumerable<SerializablePair<TKey, TValue>> src)
+    {
+        return src?.ToDictionary(pair => pair.Key, pair => pair.Value);
+    }
+
     /**
      * use CollectionExtensions.GetValueOrDefault instead
      */
@@ -50,8 +81,8 @@ public static class CollectionUtil
 
     private static T ReadField<T>(object o, string fieldName)
     {
-        Type t = o.GetType();
-        FieldInfo f = t.GetField(fieldName);
+        var t = o.GetType();
+        var f = t.GetField(fieldName);
         return (T)f.GetValue(o);
     }
 
@@ -70,32 +101,30 @@ public static class CollectionUtil
             dic.Clear();
         }
 
-        foreach (object entry in entries)
+        foreach (var entry in entries)
         {
-            TKey key = ReadField<TKey>(entry, keyColumn);
-            TValue value = ReadField<TValue>(entry, valueColumn);
-            if (dic.ContainsKey(key))
+            var key = ReadField<TKey>(entry, keyColumn);
+            var value = ReadField<TValue>(entry, valueColumn);
+            if (!dic.TryAdd(key, value))
             {
                 throw new ArgumentException($"duplicated key: {key}");
             }
-
-            dic[key] = value;
         }
     }
 
     public static T PopLast<T>(this List<T> list)
     {
-        int index = list.Count - 1;
-        T result = list[index];
+        var index = list.Count - 1;
+        var result = list[index];
         list.RemoveAt(index);
         return result;
     }
 
-    public static bool TryFindAndTake<T>(this List<T> list, Func<T, bool> criteria, out T found)
+    public static bool TryFindAndTake<T>(this List<T> list, Predicate<T> criteria, out T found)
     {
-        for (int i = list.Count - 1; i >= 0; --i)
+        for (var i = list.Count - 1; i >= 0; --i)
         {
-            T entry = list[i];
+            var entry = list[i];
             if (!criteria(entry))
             {
                 continue;
@@ -110,11 +139,11 @@ public static class CollectionUtil
         return false;
     }
 
-    public static IEnumerable<T> FindAndTakeAll<T>(this List<T> list, Func<T, bool> criteria)
+    public static IEnumerable<T> FindAndTakeAll<T>(this List<T> list, Predicate<T> criteria)
     {
-        for (int i = list.Count - 1; i >= 0; --i)
+        for (var i = list.Count - 1; i >= 0; --i)
         {
-            T entry = list[i];
+            var entry = list[i];
             if (!criteria(entry))
             {
                 continue;
@@ -126,7 +155,7 @@ public static class CollectionUtil
     }
 
     /**
-     * note that list should contains no duplicated entries.
+     * note that list should contain no duplicated entries.
      * return iterate count. -1 means no solution when reached maxIterate
      */
     public static int IterateSolve<T>(
@@ -198,8 +227,8 @@ public static class CollectionUtil
 
         int Comparison(T a, T b)
         {
-            IComparable valueA = orderBy(a);
-            IComparable valueB = orderBy(b);
+            var valueA = orderBy(a);
+            var valueB = orderBy(b);
             return valueA.CompareTo(valueB);
         }
     }
@@ -211,12 +240,12 @@ public static class CollectionUtil
             return -1;
         }
 
-        int index = 0;
-        IComparable value = orderBy(collection[0]);
-        for (int i = 1; i < collection.Count; ++i)
+        var index = 0;
+        var value = orderBy(collection[0]);
+        for (var i = 1; i < collection.Count; ++i)
         {
-            T item = collection[i];
-            IComparable newValue = orderBy(item);
+            var item = collection[i];
+            var newValue = orderBy(item);
             if (newValue.CompareTo(value) < 0)
             {
                 index = i;
@@ -234,12 +263,12 @@ public static class CollectionUtil
             return -1;
         }
 
-        int index = 0;
-        IComparable value = orderBy(collection[0]);
-        for (int i = 1; i < collection.Count; ++i)
+        var index = 0;
+        var value = orderBy(collection[0]);
+        for (var i = 1; i < collection.Count; ++i)
         {
-            T item = collection[i];
-            IComparable newValue = orderBy(item);
+            var item = collection[i];
+            var newValue = orderBy(item);
             if (newValue.CompareTo(value) > 0)
             {
                 index = i;
@@ -250,16 +279,25 @@ public static class CollectionUtil
         return index;
     }
 
-    public static int RemoveAll<T>(this LinkedList<T> list, Predicate<T> match)
+    public static int RemoveAll<T>(this LinkedList<T> linkedList, Predicate<T> criteria)
     {
-        int count = 0;
-        foreach (T e in list)
+        if (linkedList == null || criteria == null)
         {
-            if (match(e))
+            return 0;
+        }
+
+        var count = 0;
+        var node = linkedList.First;
+        while (node != null)
+        {
+            var next = node.Next;
+            if (criteria(node.Value))
             {
-                list.Remove(e);
+                linkedList.Remove(node);
                 count++;
             }
+
+            node = next;
         }
 
         return count;

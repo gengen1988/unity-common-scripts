@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using UnityEditor;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using Object = UnityEngine.Object;
 
 public static class UnityUtil
@@ -14,9 +13,9 @@ public static class UnityUtil
 
     public static Vector2 GetInputVector()
     {
-        Vector2 vector = Vector2.zero;
+        var vector = Vector2.zero;
 #if ENABLE_INPUT_SYSTEM
-        UnityEngine.InputSystem.Keyboard keyboard = UnityEngine.InputSystem.Keyboard.current;
+        var keyboard = Keyboard.current;
         if (keyboard != null)
         {
             if (keyboard.wKey.isPressed)
@@ -55,7 +54,7 @@ public static class UnityUtil
         Vector2 mousePosition;
 
 #if ENABLE_INPUT_SYSTEM
-        UnityEngine.InputSystem.Mouse currentMouse = UnityEngine.InputSystem.Mouse.current;
+        var currentMouse = Mouse.current;
         if (currentMouse == null)
         {
             return Vector2.zero;
@@ -66,7 +65,7 @@ public static class UnityUtil
         mousePosition = Input.mousePosition;
 #endif
 
-        Camera mainCamera = Camera.main;
+        var mainCamera = Camera.main;
         if (!mainCamera)
         {
             return mousePosition;
@@ -83,8 +82,8 @@ public static class UnityUtil
 
     public static Vector2 GetMousePositionDelta()
     {
-        float x = Input.GetAxisRaw("Mouse X");
-        float y = Input.GetAxisRaw("Mouse Y");
+        var x = Input.GetAxisRaw("Mouse X");
+        var y = Input.GetAxisRaw("Mouse Y");
         return new Vector2(x, y);
     }
 
@@ -113,13 +112,13 @@ public static class UnityUtil
         }
         else
         {
-            GameObject go = GameObject.Find(childName);
+            var go = GameObject.Find(childName);
             child = go && !go.transform.parent ? go.transform : null;
         }
 
         if (!child)
         {
-            GameObject go = new GameObject(childName);
+            var go = new GameObject(childName);
             child = go.transform;
             if (root)
             {
@@ -130,139 +129,33 @@ public static class UnityUtil
         return child;
     }
 
-    public static T EnsureComponent<T>(this GameObject go) where T : Component
-    {
-        if (!go.TryGetComponent(out T result))
-        {
-#if UNITY_EDITOR
-            // this method may provide more detailed exception, instead of fail silence,
-            // such as instantiate an abstract class.
-            result = ObjectFactory.AddComponent<T>(go);
-#else
-            result = go.AddComponent<T>();
-#endif
-        }
-
-        return result;
-    }
-
-    public static T EnsureComponent<T>(this Component component) where T : Component
-    {
-        if (!component)
-        {
-            return null;
-        }
-
-        if (component is T result)
-        {
-            return result;
-        }
-
-        return EnsureComponent<T>(component.gameObject);
-    }
-
-//     public static void EnsureComponent<T>(
-//         this GameObject root,
-//         ref T component,
-//         bool addIfNotExists = false) where T : Component
-//     {
-//         if (!root)
-//         {
-//             Debug.LogError("gameObject not exists");
-//             return;
-//         }
-//
-//         if (component && component.gameObject == root)
-//         {
-//             return;
-//         }
-//
-//         if (root.TryGetComponent(out T found))
-//         {
-//             component = found;
-//             return;
-//         }
-//
-//         if (addIfNotExists)
-//         {
-// #if UNITY_EDITOR
-//             // this method may provide more detailed exception instead of fail silence,
-//             // such as instantiate an abstract class.
-//             component = ObjectFactory.AddComponent<T>(root);
-// #else
-//             component = root.AddComponent<T>();
-// #endif
-//             return;
-//         }
-//
-//         Debug.LogError($"{typeof(T)} not found on {root}", root);
-//     }
-//
-//     public static void EnsureComponentInParent<T>(this GameObject searchFrom, ref T component) where T : Component
-//     {
-//         if (!searchFrom)
-//         {
-//             Debug.LogError("gameObject not exists");
-//             return;
-//         }
-//
-//         if (component && searchFrom.transform.IsChildOf(component.transform))
-//         {
-//             return;
-//         }
-//
-//         T found = searchFrom.GetComponentInParent<T>();
-//         if (found)
-//         {
-//             component = found;
-//             return;
-//         }
-//
-//         Debug.LogError($"{typeof(T)} not found above {searchFrom}", searchFrom);
-//     }
-
-    public static T[] GetAttachedComponents<T>(this Component manager, bool includeInactive = false)
-    {
-        if (!manager)
-        {
-            return Array.Empty<T>();
-        }
-
-        Type managerType = manager.GetType();
-        return manager.GetComponentsInChildren<T>(includeInactive)
-            .Cast<Component>()
-            .Where(c => c != manager)
-            .Where(c => manager == c.GetComponentInParent(managerType, true))
-            .Cast<T>()
-            .ToArray();
-    }
-
     /**
      * 清理 transform 下的子物体
      */
-    public static void DestroyChildren(this Transform root)
+    public static void DestroyChildren(this Transform src)
     {
         if (Application.isPlaying)
         {
-            foreach (Transform child in root)
+            foreach (Transform child in src)
             {
                 Object.Destroy(child.gameObject);
             }
         }
         else
         {
-            // 在编辑阶段里只能用 DestroyImmediate，而且 DestroyImmediate 用 foreach 会漏删
-            while (root.childCount > 0)
+            // 在编辑阶段里只能用 DestroyImmediate
+            // 而且 DestroyImmediate 用 foreach 会漏删
+            while (src.childCount > 0)
             {
-                Transform target = root.GetChild(0);
-                Object.DestroyImmediate(target.gameObject);
+                var child = src.GetChild(0);
+                Object.DestroyImmediate(child.gameObject);
             }
         }
     }
 
-    public static IEnumerable<Transform> Children(this Transform transform)
+    public static IEnumerable<Transform> Children(this Transform src)
     {
-        return transform.Cast<Transform>();
+        return src.Cast<Transform>();
     }
 
     /**
@@ -270,15 +163,15 @@ public static class UnityUtil
      */
     public static Vector3 TranslateWithCamera(Vector3 origin, Vector3 delta, Camera translateCamera)
     {
-        Vector3 currentScreenPoint = translateCamera.WorldToScreenPoint(origin);
-        Vector3 newWorldPoint = translateCamera.ScreenToWorldPoint(currentScreenPoint + delta);
+        var currentScreenPoint = translateCamera.WorldToScreenPoint(origin);
+        var newWorldPoint = translateCamera.ScreenToWorldPoint(currentScreenPoint + delta);
         return newWorldPoint;
     }
 
     public static Vector3 CameraRemap(Vector3 fromWorldPosition, Camera from, Camera to)
     {
-        Vector3 screenPoint = from.WorldToScreenPoint(fromWorldPosition);
-        Vector3 remapped = to.ScreenToWorldPoint(screenPoint);
+        var screenPoint = from.WorldToScreenPoint(fromWorldPosition);
+        var remapped = to.ScreenToWorldPoint(screenPoint);
         return remapped;
     }
 
@@ -287,12 +180,12 @@ public static class UnityUtil
      */
     public static Rect GetScreenRect(RectTransform trans)
     {
-        Vector3 origin = trans.position;
-        Vector2 pivot = trans.pivot;
+        var origin = trans.position;
+        var pivot = trans.pivot;
 
         // Calculate rect taking into account its scale
-        Vector2 size = Vector2.Scale(trans.rect.size, trans.lossyScale);
-        Rect rect = new Rect(origin.x, origin.y, size.x, size.y);
+        var size = Vector2.Scale(trans.rect.size, trans.lossyScale);
+        var rect = new Rect(origin.x, origin.y, size.x, size.y);
 
         // Adjust the x and y coordinates of the Rect based on the pivot point
         rect.x -= pivot.x * size.x;
@@ -302,30 +195,17 @@ public static class UnityUtil
 
     public static bool Intersects(RectTransform trans1, RectTransform trans2)
     {
-        Rect rect1 = GetScreenRect(trans1);
-        Rect rect2 = GetScreenRect(trans2);
+        var rect1 = GetScreenRect(trans1);
+        var rect2 = GetScreenRect(trans2);
         return rect1.Overlaps(rect2);
     }
 
     public static bool Contains(RectTransform outer, RectTransform inner)
     {
-        Rect outerRect = GetScreenRect(outer);
-        Rect innerRect = GetScreenRect(inner);
+        var outerRect = GetScreenRect(outer);
+        var innerRect = GetScreenRect(inner);
         return outerRect.Contains(innerRect.min) && outerRect.Contains(innerRect.max);
     }
-
-    // public static IEnumerable<T> WithAlive<T>(this IEnumerable<T> collection) where T : Object
-    // {
-    //     return collection.Where(entry =>
-    //     {
-    //         return entry switch
-    //         {
-    //             GameObject go => PoolWrapper.IsAlive(go),
-    //             Component component => PoolWrapper.IsAlive(component),
-    //             _ => entry
-    //         };
-    //     });
-    // }
 
     // public static IEnumerable<Collider2D> FindSiblingNearby(
     //     Transform self,
@@ -339,7 +219,7 @@ public static class UnityUtil
     //         .Where(found => IsSibling(self, found.transform))
     //         .OrderBy(found => (found.ClosestPoint(searchOrigin) - searchOrigin).sqrMagnitude);
     // }
-    //
+
     public static bool IsSibling(Transform trans1, Transform trans2)
     {
         if (!trans1 || !trans2)
@@ -350,14 +230,14 @@ public static class UnityUtil
         return !trans1.IsChildOf(trans2) && !trans2.IsChildOf(trans1);
     }
 
-    public static IEnumerable<Transform> TraverseTransform(Transform root, bool deep)
+    public static IEnumerable<Transform> TraverseTransform(Transform src, bool deep)
     {
-        if (!root)
+        if (!src)
         {
             yield break;
         }
 
-        foreach (Transform child in root)
+        foreach (Transform child in src)
         {
             yield return child;
             if (!deep)
@@ -365,7 +245,7 @@ public static class UnityUtil
                 continue;
             }
 
-            foreach (Transform childOfChild in TraverseTransform(child, true))
+            foreach (var childOfChild in TraverseTransform(child, true))
             {
                 yield return childOfChild;
             }

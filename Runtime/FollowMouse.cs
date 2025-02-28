@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class FollowMouse : MonoBehaviour
 {
-    void Update()
+    private void Update()
     {
         transform.position = UnityUtil.GetMousePositionWorld();
     }

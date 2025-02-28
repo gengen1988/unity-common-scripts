@@ -80,8 +80,8 @@ public class IFFTransponder : MonoBehaviour
 
     public static bool IsFriend(GameObject a, GameObject b)
     {
-        string id1 = GetIdentity(a);
-        string id2 = GetIdentity(b);
+        var id1 = GetIdentity(a);
+        var id2 = GetIdentity(b);
         if (string.IsNullOrEmpty(id1) || string.IsNullOrEmpty(id2))
         {
             return false;
@@ -92,8 +92,8 @@ public class IFFTransponder : MonoBehaviour
 
     public static bool IsFoe(GameObject a, GameObject b)
     {
-        string id1 = GetIdentity(a);
-        string id2 = GetIdentity(b);
+        var id1 = GetIdentity(a);
+        var id2 = GetIdentity(b);
         if (string.IsNullOrEmpty(id1) || string.IsNullOrEmpty(id2))
         {
             return false;

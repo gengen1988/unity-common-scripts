@@ -8,13 +8,9 @@ public class ParticleSystemEventProxy : MonoBehaviour
 
     private void Awake()
     {
-        ParticleSystem[] particles = GetComponentsInChildren<ParticleSystem>();
-        Transform self = transform;
-        foreach (ParticleSystem ps in particles)
-        {
-            ParticleSystem.MainModule main = ps.main;
-            main.stopAction = ps.transform == self ? ParticleSystemStopAction.Callback : ParticleSystemStopAction.None;
-        }
+        TryGetComponent(out ParticleSystem shuriken);
+        var mainModule = shuriken.main;
+        mainModule.stopAction = ParticleSystemStopAction.Callback;
     }
 
     private void OnDestroy()

@@ -1,46 +1,60 @@
-﻿using System;
+﻿using Sirenix.OdinInspector;
 using UnityEngine;
 
 public class FeedbackShuriken : MonoBehaviour
 {
-    private Guid _blockId;
-    private ParticleSystem _shuriken;
-    private bool _particleStopped;
-    private bool _killInvoked;
+    // [SerializeField] private SortingLayer ParticleLayer;
+
     private Feedback _feedback;
+    private ParticleSystem _shuriken;
 
     private void Awake()
     {
-        // feedback logic
-        TryGetComponent(out _feedback);
+        _shuriken = GetComponentInChildren<ParticleSystem>();
+        if (!_shuriken)
+        {
+            Debug.LogWarning($"No particle system found in {gameObject}, please remove {GetType()}", this);
+            Destroy(this);
+            return;
+        }
+
+        var proxy = _shuriken.EnsureComponent<ParticleSystemEventProxy>(true);
+        proxy.OnStopped += HandleParticleSystemStopped;
+
+        _feedback = this.EnsureComponent<Feedback>();
         _feedback.OnPlay += HandlePlay;
         _feedback.OnStop += HandleStop;
         _feedback.OnClear += HandleClear;
-
-        // shuriken logic
-        _shuriken = GetComponentInChildren<ParticleSystem>();
-        ParticleSystemEventProxy proxy = _shuriken.EnsureComponent<ParticleSystemEventProxy>();
-        proxy.OnStopped += HandleParticleSystemStopped;
     }
 
-    private void HandlePlay(Feedback feedback)
+    private void HandlePlay()
     {
-        _blockId = feedback.AcquireBlock();
+        _feedback.AcquireBlock(this);
+        _shuriken.Play(true);
     }
 
-    private void HandleStop(Feedback feedback)
+    private void HandleStop()
     {
         _shuriken.Stop(true, ParticleSystemStopBehavior.StopEmitting);
     }
 
-    private void HandleClear(Feedback feedback)
+    private void HandleClear()
     {
         _shuriken.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
     }
 
     private void HandleParticleSystemStopped()
     {
-        _feedback.ReleaseBlock(_blockId);
-        _feedback.Stop();
+        _feedback.ReleaseBlock(this);
+    }
+
+    [Button]
+    private void EnsureShurikenLayer()
+    {
+        var particleSystems = GetComponentsInChildren<ParticleSystem>();
+        foreach (var system in particleSystems)
+        {
+            // system.main.
+        }
     }
 }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 
-public class GameEventBus : Singleton<GameEventBus>
+public class GameEventBus
 {
     private static int MAX_POOL_SIZE = 1000;
 
@@ -12,85 +12,58 @@ public class GameEventBus : Singleton<GameEventBus>
         public static ObjectPool<T> EventPool;
     }
 
-    private readonly Dictionary<Type, LinkedList<Delegate>> _listenersByType = new();
-    private readonly Queue<GameEvent> _eventQueue = new();
+    private readonly Dictionary<Type, Action<GameEvent>> _listenerByType = new();
+    private readonly Dictionary<Delegate, Action<GameEvent>> _wrappedListeners = new();
 
-    public static void Publish<T>(T gameEvent = null) where T : GameEvent, new() => Instance._Publish(gameEvent);
-    public static void Subscribe<T>(Action<T> callback) where T : GameEvent => Instance._Subscribe(callback);
-    public static void Unsubscribe<T>(Action<T> callback) where T : GameEvent => Instance._Unsubscribe(callback);
-
-    public void Process()
+    public void Emit<T>(Action<T> initializer = null) where T : GameEvent, new()
     {
-        var queue = Instance._eventQueue;
-        while (queue.Count > 0)
-        {
-            var evt = queue.Dequeue();
-            try
-            {
-                ProcessEvent(evt);
-            }
-            finally
-            {
-                ReleaseEvent(evt);
-            }
-        }
-    }
-
-    // 发送事件（自动管理事件生命周期）
-    private void _Publish<T>(T gameEvent = null) where T : GameEvent, new()
-    {
-        gameEvent ??= AcquireEvent<T>();
-        _eventQueue.Enqueue(gameEvent);
-    }
-
-    private void _Subscribe<T>(Action<T> callback) where T : GameEvent
-    {
+        // early return
         var type = typeof(T);
-        if (!_listenersByType.TryGetValue(type, out var list))
+        var listeners = _listenerByType.GetValueOrDefault(type);
+        if (listeners == null)
         {
-            list = new LinkedList<Delegate>();
-            _listenersByType.Add(type, list);
-        }
-
-        list.AddLast(callback);
-    }
-
-    private void _Unsubscribe<T>(Action<T> callback) where T : GameEvent
-    {
-        var type = typeof(T);
-        _listenersByType[type].Remove(callback);
-    }
-
-    private void ProcessEvent(GameEvent gameEvent)
-    {
-        var type = gameEvent.GetType();
-        if (!_listenersByType.TryGetValue(type, out var listeners))
-        {
-            Debug.LogWarning($"{type.Name} has not been registered yet.");
             return;
         }
 
-        foreach (var listener in listeners)
+        var gameEvent = AcquireEvent<T>();
+        initializer?.Invoke(gameEvent);
+        listeners.Invoke(gameEvent);
+        ReleaseEvent(gameEvent);
+    }
+
+    public void Subscribe<T>(Action<T> listener) where T : GameEvent
+    {
+        var type = typeof(T);
+        Action<GameEvent> wrappedListener = gameEvent => listener(gameEvent as T);
+        if (!_listenerByType.TryAdd(type, wrappedListener))
         {
-            listener.DynamicInvoke(gameEvent);
+            _listenerByType[type] += wrappedListener;
+        }
+
+        // Store the wrapped listener for later unsubscription
+        if (!_wrappedListeners.TryAdd(listener, wrappedListener))
+        {
+            _wrappedListeners[listener] += wrappedListener;
         }
     }
 
-    // 清理所有事件和监听器
-    public void Clear()
+    public void Unsubscribe<T>(Action<T> listener) where T : GameEvent
     {
-        _eventQueue.Clear();
-        _listenersByType.Clear();
+        if (!_wrappedListeners.TryGetValue(listener, out var wrappedListener))
+        {
+            return;
+        }
+
+        _listenerByType[typeof(T)] -= wrappedListener;
+        _wrappedListeners.Remove(listener);
     }
 
-    // 事件池工厂方法
     private static ObjectPool<T> GetOrCreatePool<T>() where T : GameEvent, new()
     {
         if (TypedCache<T>.EventPool == null)
         {
             TypedCache<T>.EventPool = new ObjectPool<T>(
                 createFunc: () => new T(), // this is why we can not use ObjectPool<GameEvent>
-                actionOnGet: evt => evt.OnReset(),
                 maxSize: MAX_POOL_SIZE
             );
         }
@@ -98,13 +71,13 @@ public class GameEventBus : Singleton<GameEventBus>
         return TypedCache<T>.EventPool;
     }
 
-    public static T AcquireEvent<T>() where T : GameEvent, new()
+    private static T AcquireEvent<T>() where T : GameEvent, new()
     {
         var pool = GetOrCreatePool<T>();
         return pool.Get();
     }
 
-    public static void ReleaseEvent<T>(T gameEvent) where T : GameEvent, new()
+    private static void ReleaseEvent<T>(T gameEvent) where T : GameEvent, new()
     {
         var pool = GetOrCreatePool<T>();
         pool.Release(gameEvent);
@@ -113,7 +86,4 @@ public class GameEventBus : Singleton<GameEventBus>
 
 public class GameEvent
 {
-    public virtual void OnReset()
-    {
-    }
 }

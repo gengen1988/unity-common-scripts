@@ -10,54 +10,54 @@ public static class MathUtil
         return 0.5f * Mathf.PI - Mathf.Atan(f);
     }
 
-    public static float Remap(float fromValue, float fromA, float fromB, float toA, float toB)
+    public static float Remap(float value, float fromA, float fromB, float toA, float toB)
     {
-        float ratio = RemapTo01(fromValue, fromA, fromB);
-        float scaledValue = RemapFrom01(ratio, toA, toB);
+        var ratio = RemapTo01(value, fromA, fromB);
+        var scaledValue = RemapFrom01(ratio, toA, toB);
         return scaledValue;
     }
 
-    public static float RemapClamp(float fromValue, float fromA, float fromB, float toA, float toB)
+    public static float RemapClamp(float value, float fromA, float fromB, float toA, float toB)
     {
-        float ratio = RemapTo01(fromValue, fromA, fromB);
-        float clamped = Mathf.Clamp01(ratio);
-        float scaledValue = RemapFrom01(clamped, toA, toB);
+        var ratio = RemapTo01(value, fromA, fromB);
+        var clamped = Mathf.Clamp01(ratio);
+        var scaledValue = RemapFrom01(clamped, toA, toB);
         return scaledValue;
     }
 
     /**
      * remap value from 0 to 1 based to other range.
-     * alias of Mathf.LerpUnclamped()
+     * equals Mathf.LerpUnclamped()
      */
-    public static float RemapFrom01(float value01, float a, float b)
+    public static float RemapFrom01(float value01, float toA, float toB)
     {
-        return a + (b - a) * value01;
+        return toA + (toB - toA) * value01;
     }
 
     /**
      * like Mathf.InverseLerp() but no clamp
      */
-    public static float RemapTo01(float value, float a, float b)
+    public static float RemapTo01(float value, float fromA, float fromB)
     {
-        return (value - a) / (b - a);
+        return (value - fromA) / (fromB - fromA);
     }
 
-    public static float LerpTimeCorrection(float steepness)
+    public static float LerpTimeCorrection(float steepness01)
     {
-        return LerpTimeCorrection(steepness, Time.deltaTime);
+        return LerpTimeCorrection(steepness01, Time.deltaTime);
     }
 
-    public static float LerpTimeCorrection(float steepness, float deltaTime)
+    public static float LerpTimeCorrection(float steepness01, float deltaTime)
     {
         // see: https://gamedev.stackexchange.com/questions/149103/why-use-time-deltatime-in-lerping-functions
         const float REFERENCE_FRAME_RATE = 30f;
-        float s = Mathf.Clamp01(steepness);
+        var s = Mathf.Clamp01(steepness01);
         return 1 - Mathf.Pow(1 - s, deltaTime * REFERENCE_FRAME_RATE);
     }
 
     public static float CalcSlope(Vector2 from, Vector2 to)
     {
-        Vector2 los = to - from;
+        var los = to - from;
         return los.y / los.x;
     }
 
@@ -67,7 +67,7 @@ public static class MathUtil
      */
     public static float SmootherStep(float from, float to, float t)
     {
-        float y = t * t * t * (t * (6 * t - 15) + 10);
+        var y = t * t * t * (t * (6 * t - 15) + 10);
         return Mathf.Lerp(from, to, y);
     }
 
@@ -89,7 +89,7 @@ public static class MathUtil
         midpoint = Mathf.Clamp01(midpoint);
         steepness = Mathf.Clamp01(steepness);
 
-        float c = 2 / (1 - steepness) - 1;
+        var c = 2 / (1 - steepness) - 1;
 
         if (x < midpoint)
         {
@@ -113,9 +113,9 @@ public static class MathUtil
 
     private static Vector3 CenterOfMassList<T>(List<T> points, Func<T, Vector3> selector)
     {
-        Vector3 sum = Vector3.zero;
-        int count = 0;
-        foreach (T point in points)
+        var sum = Vector3.zero;
+        var count = 0;
+        foreach (var point in points)
         {
             if (selector != null)
             {
@@ -139,9 +139,9 @@ public static class MathUtil
 
     private static Vector3 CenterOfMassArray<T>(T[] points, Func<T, Vector3> selector)
     {
-        Vector3 sum = Vector3.zero;
-        int count = 0;
-        foreach (T point in points)
+        var sum = Vector3.zero;
+        var count = 0;
+        foreach (var point in points)
         {
             if (selector != null)
             {
@@ -165,9 +165,9 @@ public static class MathUtil
 
     private static Vector3 CenterOfMassGeneric<T>(IEnumerable<T> points, Func<T, Vector3> selector)
     {
-        Vector3 sum = Vector3.zero;
-        int count = 0;
-        foreach (T point in points)
+        var sum = Vector3.zero;
+        var count = 0;
+        foreach (var point in points)
         {
             if (selector != null)
             {
@@ -191,16 +191,12 @@ public static class MathUtil
 
     public static Vector3 CenterOfMass<T>(this IEnumerable<T> points, Func<T, Vector3> selector = null)
     {
-        switch (points)
+        return points switch
         {
-            case List<T> list:
-                return CenterOfMassList(list, selector);
-            case T[] array:
-                return CenterOfMassArray(array, selector);
-            default:
-                // this has gc alloc for IEnumerable
-                return CenterOfMassGeneric(points, selector);
-        }
+            List<T> list => CenterOfMassList(list, selector),
+            T[] array => CenterOfMassArray(array, selector),
+            _ => CenterOfMassGeneric(points, selector)
+        };
     }
 
     public static Vector3 VectorByQuaternion(Quaternion rotation)
@@ -210,8 +206,8 @@ public static class MathUtil
 
     public static Quaternion QuaternionByVector(Vector3 direction)
     {
-        Vector3 forward = Vector3.forward;
-        Vector3 upwards = Quaternion.AngleAxis(90f, forward) * direction;
+        var forward = Vector3.forward;
+        var upwards = Quaternion.Euler(0, 0, 90f) * direction;
         return Quaternion.LookRotation(forward, upwards);
     }
 
@@ -227,7 +223,7 @@ public static class MathUtil
 
     public static Vector2 VectorByAngle(float degree)
     {
-        float rad = degree * Mathf.Deg2Rad;
+        var rad = degree * Mathf.Deg2Rad;
         return new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
     }
 
@@ -251,12 +247,13 @@ public static class MathUtil
      */
     public static int Quadratic(float a, float b, float c, out float solution1, out float solution2)
     {
+        solution1 = solution2 = float.NaN;
+
         // if a = 0, then solve bx + c = 0
         if (Mathf.Approximately(a, 0))
         {
             if (Mathf.Approximately(b, 0))
             {
-                solution1 = solution2 = float.NaN;
                 return 0;
             }
             else
@@ -266,8 +263,8 @@ public static class MathUtil
             }
         }
 
-        float delta = b * b - 4 * a * c;
-        float twoA = 2 * a;
+        var delta = b * b - 4 * a * c;
+        var twoA = 2 * a;
 
         // one solution (handle -0.0000000001 first)
         if (Mathf.Approximately(delta, 0))
@@ -279,12 +276,11 @@ public static class MathUtil
         // no solution
         if (delta < 0)
         {
-            solution1 = solution2 = float.NaN;
             return 0;
         }
 
         // two solutions
-        float root = Mathf.Sqrt(delta);
+        var root = Mathf.Sqrt(delta);
         solution1 = (-b + root) / twoA;
         solution2 = (-b - root) / twoA;
         return 2;
@@ -297,7 +293,7 @@ public static class MathUtil
 
     public static Vector2 Project(Vector2 point, Ray2D ray)
     {
-        Ray ray3D = new Ray(ray.origin, ray.direction);
+        var ray3D = new Ray(ray.origin, ray.direction);
         return Project(point, ray3D);
     }
 
@@ -308,8 +304,8 @@ public static class MathUtil
 
     public static Vector3 Mirror(Vector3 point, Vector3 from, Vector3 to)
     {
-        Vector3 projection = Project(point, from, to);
-        Vector3 perpendicular = projection - point;
+        var projection = Project(point, from, to);
+        var perpendicular = projection - point;
         return point + 2 * perpendicular;
     }
 
@@ -333,8 +329,8 @@ public static class MathUtil
 
     public static bool LineIntersect(Vector2 from1, Vector2 to1, Vector2 from2, Vector2 to2, out Vector2 point)
     {
-        float d1 = Vector3.Cross(from1 - from2, to2 - from2).z;
-        float d2 = Vector3.Cross(to1 - from2, to2 - from2).z;
+        var d1 = Vector3.Cross(from1 - from2, to2 - from2).z;
+        var d2 = Vector3.Cross(to1 - from2, to2 - from2).z;
 
         // parallel check
         if (Mathf.Approximately(d1, d2))
@@ -360,16 +356,16 @@ public static class MathUtil
 
     public static Vector2 LineBoxIntersect(float lineRad, Vector2 box)
     {
-        float cornerRad = Mathf.Atan2(box.y, box.x);
-        float a = Mathf.Tan(lineRad);
+        var cornerRad = Mathf.Atan2(box.y, box.x);
+        var a = Mathf.Tan(lineRad);
         if (lineRad < cornerRad)
         {
-            float y = a * box.x;
+            var y = a * box.x;
             return new Vector2(box.x, y);
         }
         else
         {
-            float x = box.y / a;
+            var x = box.y / a;
             return new Vector2(x, box.y);
         }
     }
@@ -384,9 +380,9 @@ public static class MathUtil
         out Vector2 point1,
         out Vector2 point2)
     {
-        Vector2 perpendicular = Project(center, ray);
-        Vector2 perpendicularToCircle = perpendicular - center;
-        float perpendicularLength = perpendicularToCircle.magnitude;
+        var perpendicular = Project(center, ray);
+        var perpendicularToCircle = perpendicular - center;
+        var perpendicularLength = perpendicularToCircle.magnitude;
 
         // too far
         if (perpendicularLength > radius)
@@ -403,10 +399,10 @@ public static class MathUtil
         }
 
         // two point
-        float alpha = Mathf.Asin(perpendicularLength / radius);
-        float omegaDegree = 90 - alpha * Mathf.Rad2Deg;
-        Vector2 direction1 = Rotate(perpendicularToCircle, omegaDegree);
-        Vector2 direction2 = Rotate(perpendicularToCircle, -omegaDegree);
+        var alpha = Mathf.Asin(perpendicularLength / radius);
+        var omegaDegree = 90 - alpha * Mathf.Rad2Deg;
+        var direction1 = Rotate(perpendicularToCircle, omegaDegree);
+        var direction2 = Rotate(perpendicularToCircle, -omegaDegree);
 
         point1 = center + direction1.normalized * radius;
         point2 = center + direction2.normalized * radius;
@@ -415,22 +411,23 @@ public static class MathUtil
 
     public static int SignWithZero(float number)
     {
-        if (Mathf.Approximately(number, 0))
+        return number switch
         {
-            return 0;
-        }
-        else if (number > 0)
-        {
-            return 1;
-        }
-        else if (number < 0)
-        {
-            return -1;
-        }
-        else
-        {
-            return 0;
-        }
+            > 0 => 1,
+            < 0 => -1,
+            _ => 0
+        };
+    }
+
+    public static Vector2 ChangeVectorMagnitude(
+        Vector2 vector,
+        float delta,
+        float min = 0f,
+        float max = float.PositiveInfinity)
+    {
+        var newMagnitude = vector.magnitude + delta;
+        var clamped = Mathf.Clamp(newMagnitude, min, max);
+        return vector.normalized * clamped;
     }
 
     public static Vector3 ChangeVectorMagnitude(
@@ -439,8 +436,8 @@ public static class MathUtil
         float min = 0f,
         float max = float.PositiveInfinity)
     {
-        float newMagnitude = vector.magnitude + delta;
-        float clamped = Mathf.Clamp(newMagnitude, min, max);
+        var newMagnitude = vector.magnitude + delta;
+        var clamped = Mathf.Clamp(newMagnitude, min, max);
         return vector.normalized * clamped;
     }
 
@@ -450,9 +447,9 @@ public static class MathUtil
         float min = 0f,
         float max = float.PositiveInfinity)
     {
-        float abs = Mathf.Abs(value);
-        float sign = Mathf.Sign(value);
-        float clamped = Mathf.Clamp(abs + delta, min, max);
+        var abs = Mathf.Abs(value);
+        var sign = Mathf.Sign(value);
+        var clamped = Mathf.Clamp(abs + delta, min, max);
         return sign * clamped;
     }
 
@@ -486,8 +483,8 @@ public static class MathUtil
 
         if (spaceAround)
         {
-            float delta = 1f / count;
-            for (int i = 0; i < count; ++i)
+            var delta = 1f / count;
+            for (var i = 0; i < count; ++i)
             {
                 yield return (i + 0.5f) * delta;
             }
@@ -500,8 +497,8 @@ public static class MathUtil
                 yield break;
             }
 
-            float delta = 1f / (count - 1);
-            for (int i = 0; i < count; ++i)
+            var delta = 1f / (count - 1);
+            for (var i = 0; i < count; ++i)
             {
                 yield return i * delta;
             }
@@ -536,8 +533,8 @@ public static class MathUtil
         float angleRange = 180f,
         bool spaceAround = false)
     {
-        Quaternion rotation = QuaternionByVector(los);
-        float halfAngle = 0.5f * angleRange;
+        var rotation = QuaternionByVector(los);
+        var halfAngle = 0.5f * angleRange;
         return Progress01(count, spaceAround)
             .Select(t => Mathf.Lerp(-halfAngle, halfAngle, t))
             .Select(VectorByAngle)
@@ -554,7 +551,7 @@ public static class MathUtil
             return;
         }
 
-        float sum = a + b;
+        var sum = a + b;
         if (Mathf.Abs(a) > Mathf.Abs(b))
         {
             a = sum;
@@ -577,12 +574,7 @@ public static class MathUtil
      */
     public static float ClampAbs(float value, float maxAbs)
     {
-        if (Mathf.Abs(value) > maxAbs)
-        {
-            return Mathf.Sign(value) * maxAbs;
-        }
-
-        return value;
+        return Mathf.Clamp(value, -maxAbs, maxAbs);
     }
 
     public static bool IsInAngle(Vector2 los, Vector2 from, float angle)
@@ -612,8 +604,51 @@ public static class MathUtil
         }
     }
 
-    public static int GetBit(int number, int index)
+    public static bool GetBitAt(int number, int index)
     {
-        return (number & (1 << index)) > 0 ? 1 : 0;
+        return (number & (1 << index)) > 0;
+    }
+
+    public static int GetHighestBit(int number)
+    {
+        var value = number;
+        var count = 0;
+        while (value > 0)
+        {
+            value >>= 1;
+            count++;
+        }
+
+        return count;
+    }
+
+    public static void MoveByForce(ref float position, ref float velocity, float force, float deltaTime)
+    {
+        var nextVelocity = velocity + force * deltaTime;
+        var deltaVelocity = nextVelocity - velocity;
+        var deltaPosition = (velocity + 0.5f * deltaVelocity) * deltaTime;
+
+        position += deltaPosition;
+        velocity = nextVelocity;
+    }
+
+    public static void MoveByForce(ref Vector2 position, ref Vector2 velocity, Vector2 force, float deltaTime)
+    {
+        var nextVelocity = velocity + force * deltaTime;
+        var deltaVelocity = nextVelocity - velocity;
+        var deltaPosition = (velocity + 0.5f * deltaVelocity) * deltaTime;
+
+        position += deltaPosition;
+        velocity = nextVelocity;
+    }
+
+    public static void MoveByForce(ref Vector3 position, ref Vector3 velocity, Vector3 force, float deltaTime)
+    {
+        var nextVelocity = velocity + force * deltaTime;
+        var deltaVelocity = nextVelocity - velocity;
+        var deltaPosition = (velocity + 0.5f * deltaVelocity) * deltaTime;
+
+        position += deltaPosition;
+        velocity = nextVelocity;
     }
 }

@@ -2,29 +2,22 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Feedback : MonoBehaviour
+[RequireComponent(typeof(GameEntityBridge))]
+public class Feedback : StatefulEntityBehaviour<Feedback>
 {
-    public event Action<Feedback> OnPlay;
-    public event Action<Feedback> OnStop;
-    public event Action<Feedback> OnClear;
+    public const string MSG_STOP = "stop";
 
-    [SerializeField] private float MaxActiveTime = -1f;
-    [SerializeField] private float MaxDespawningTime = -1f;
+    // event action are more flexible when other refuse to register on awake
+    public event Action OnPlay;
+    public event Action OnStop;
+    public event Action OnClear;
+
+    [SerializeField] private float MaxDespawningTime = 1f;
 
     private float _elapsedTime;
-    private GameEntity _entity;
-    private readonly HashSet<Guid> _blocks = new();
+    private readonly HashSet<object> _blocks = new();
 
-    public bool IsPlaying => _entity.CurrentState == EntityState.Active;
-
-    private void Awake()
-    {
-        TryGetComponent(out _entity);
-        _entity.OnSpawn += HandleSpawn;
-        _entity.OnKill += HandleKill;
-        _entity.OnTick += HandleTick;
-        _entity.OnFinish += HandleFinish;
-    }
+    protected override IState<Feedback> InitialState => Playing.Instance;
 
     private void OnDestroy()
     {
@@ -33,131 +26,80 @@ public class Feedback : MonoBehaviour
         OnClear = null;
     }
 
-    private void HandleTick(GameEntity entity, float deltaTime)
+    public void AcquireBlock(object obj)
     {
-        switch (entity.CurrentState)
+        _blocks.Add(obj);
+    }
+
+    public void ReleaseBlock(object obj)
+    {
+        _blocks.Remove(obj);
+    }
+
+    private class Playing : State<Feedback, Playing>
+    {
+        public override void OnEnter(Feedback ctx)
         {
-            case EntityState.Active:
-                TickActive(entity, deltaTime);
-                break;
-            case EntityState.Despawning:
-                TickDespawning(entity, deltaTime);
-                break;
+            // Debug.Log("feedback play");
+            ctx.RegisterTransition(MSG_STOP, Stopping.Instance);
+            ctx._blocks.Clear();
+            ctx.OnPlay?.Invoke();
+        }
+
+        public override void OnRefresh(Feedback ctx)
+        {
+            // block
+            if (ctx._blocks.Count == 0)
+            {
+                ctx.StateMachine.Send(MSG_STOP);
+            }
         }
     }
 
-    private void TickActive(GameEntity entity, float deltaTime)
+    private class Stopping : State<Feedback, Stopping>
     {
-        // forever
-        if (MaxActiveTime < 0)
+        public override void OnEnter(Feedback ctx)
         {
-            return;
+            // Debug.Log("feedback stop");
+            ctx._elapsedTime = 0;
+            ctx.OnStop?.Invoke();
         }
 
-        // timeout, graceful stop
-        if (_elapsedTime >= MaxActiveTime)
+        public override void OnRefresh(Feedback ctx)
         {
-            entity.SendKill();
-            return;
-        }
+            // force clear when timeout
+            if (ctx._elapsedTime >= ctx.MaxDespawningTime)
+            {
+                ctx._blocks.Clear();
+            }
 
-        _elapsedTime += deltaTime;
-    }
+            // no longer blocked
+            if (ctx._blocks.Count == 0)
+            {
+                ctx.OnClear?.Invoke();
+                PoolUtil.Despawn(ctx);
+                return;
+            }
 
-    private void TickDespawning(GameEntity entity, float deltaTime)
-    {
-        // no longer blocked
-        if (_blocks.Count == 0)
-        {
-            entity.SendFinish();
-            return;
-        }
-
-        // force clear
-        if (MaxDespawningTime < 0 && _elapsedTime >= MaxDespawningTime)
-        {
-            _blocks.Clear();
-            return;
-        }
-
-        _elapsedTime += deltaTime;
-    }
-
-    private void HandleSpawn(GameEntity entity)
-    {
-        entity.SendReady(); // instant ready, do not wait for next frame, which means it can be killed right after spawn
-        _blocks.Clear();
-        _elapsedTime = 0;
-        OnPlay?.Invoke(this);
-    }
-
-    private void HandleKill(GameEntity entity)
-    {
-        _elapsedTime = 0;
-        if (MaxDespawningTime >= 0)
-        {
-            _blocks.Add(Guid.NewGuid());
-        }
-
-        OnStop?.Invoke(this);
-    }
-
-    private void HandleFinish(GameEntity entity)
-    {
-        OnClear?.Invoke(this);
-    }
-
-    public Guid AcquireBlock()
-    {
-        var blockId = Guid.NewGuid();
-        _blocks.Add(blockId);
-        return blockId;
-    }
-
-    public void ReleaseBlock(Guid blockId)
-    {
-        _blocks.Remove(blockId);
-    }
-
-    public void Stop()
-    {
-        if (_entity.CurrentState == EntityState.Active)
-        {
-            _entity.SendKill();
-        }
-        else
-        {
-            Debug.LogWarning("Attempting to release an entity that is not active.");
+            ctx._elapsedTime += ctx.LocalDeltaTime;
         }
     }
+}
 
-    // static shorthand
-    public static Feedback Spawn(Feedback prefab, Vector3 position, Quaternion rotation, Transform parent = null)
+public static class FeedbackUtil
+{
+    public static Feedback Play(this Feedback prefab, Vector3 position, Quaternion rotation)
     {
-        if (!prefab)
-        {
-            return null;
-        }
-
-        var go = EntityManager.Instance.Spawn(prefab.gameObject, position, rotation, parent);
-        go.TryGetComponent(out Feedback feedback);
-        return feedback;
+        return PoolUtil.Spawn(prefab, position, rotation);
     }
 
-    public static Feedback Spawn(Feedback prefab, Transform parent = null)
+    public static Feedback Play(this Feedback prefab)
     {
-        var position = parent ? parent.position : Vector3.zero;
-        var rotation = parent ? parent.rotation : Quaternion.identity;
-        return Spawn(prefab, position, rotation, parent);
+        return PoolUtil.Spawn(prefab, Vector3.zero, Quaternion.identity);
     }
 
-    public static void Kill(Feedback feedback)
+    public static void Stop(this Feedback feedback)
     {
-        if (!feedback)
-        {
-            return;
-        }
-
-        EntityManager.Instance.Kill(feedback.gameObject);
+        feedback?.StateMachine.Send(Feedback.MSG_STOP);
     }
 }

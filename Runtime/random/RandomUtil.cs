@@ -9,11 +9,11 @@ public static class RandomUtil
      */
     public static void Shuffle<T>(IList<T> list)
     {
-        int n = list.Count;
+        var n = list.Count;
         while (n > 1)
         {
             n--;
-            int k = Random.Range(0, n + 1);
+            var k = Random.Range(0, n + 1);
             (list[k], list[n]) = (list[n], list[k]);
         }
     }
@@ -24,8 +24,8 @@ public static class RandomUtil
      */
     public static float BatesSample(int n = 2)
     {
-        float sum = 0;
-        for (int i = 0; i < n; ++i)
+        var sum = 0f;
+        for (var i = 0; i < n; ++i)
         {
             sum += Random.value;
         }
@@ -38,7 +38,7 @@ public static class RandomUtil
      */
     public static float TriangularSample(float expect = .5f)
     {
-        float value = Random.value;
+        var value = Random.value;
         if (value < expect)
         {
             return Mathf.Sqrt(expect * value);
@@ -62,8 +62,8 @@ public static class RandomUtil
      */
     public static T Take<T>(List<T> list)
     {
-        int index = Random.Range(0, list.Count);
-        T result = list[index];
+        var index = Random.Range(0, list.Count);
+        var result = list[index];
         list.RemoveAt(index);
         return result;
     }
@@ -74,45 +74,36 @@ public static class RandomUtil
      */
     public static bool Check(float successRate, int n = 3)
     {
-        float clamped = Mathf.Clamp01(successRate);
-        float r = BatesSample(n);
+        var clamped = Mathf.Clamp01(successRate);
+        var r = BatesSample(n);
         return r <= clamped;
     }
 
     public static Vector3 PointInBox(Vector3 size)
     {
-        Vector3 extents = size / 2;
-        float x = Random.Range(-extents.x, extents.x);
-        float y = Random.Range(-extents.y, extents.y);
-        float z = Random.Range(-extents.z, extents.z);
+        var extents = size / 2;
+        var x = Random.Range(-extents.x, extents.x);
+        var y = Random.Range(-extents.y, extents.y);
+        var z = Random.Range(-extents.z, extents.z);
         return new Vector3(x, y, z);
     }
 
     public static Vector3 PointInBox(float size)
     {
-        float extents = size / 2;
-        float x = Random.Range(-extents, extents);
-        float y = Random.Range(-extents, extents);
-        float z = Random.Range(-extents, extents);
+        var extents = size / 2;
+        var x = Random.Range(-extents, extents);
+        var y = Random.Range(-extents, extents);
+        var z = Random.Range(-extents, extents);
         return new Vector3(x, y, z);
     }
 
     public static Vector2 PointInDonut(float outer = 1f, float inner = 1f)
     {
-        float angle = Random.Range(0f, 360f);
-        float length = Random.Range(inner, outer);
-        float rad = angle * Mathf.Deg2Rad;
-        Vector2 dir = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
+        var angle = Random.Range(0f, 360f);
+        var length = Random.Range(inner, outer);
+        var rad = angle * Mathf.Deg2Rad;
+        var dir = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
         return dir * length;
-    }
-
-    public static Quaternion Rotate(float angleRange)
-    {
-        float half = angleRange / 2;
-        float r = BatesSample(3);
-        float angle = Mathf.Lerp(-half, half, r);
-        Quaternion rotation = Quaternion.Euler(0, 0, angle);
-        return rotation;
     }
 
     /**
@@ -120,11 +111,11 @@ public static class RandomUtil
      */
     public static int WeightedIndex(params float[] weights)
     {
-        float totalWeight = weights.Sum();
-        float randomValue = Random.Range(0, totalWeight);
-        float cumulativeWeight = 0f;
+        var totalWeight = weights.Sum();
+        var randomValue = Random.Range(0, totalWeight);
+        var cumulativeWeight = 0f;
 
-        for (int i = 0; i < weights.Length; ++i)
+        for (var i = 0; i < weights.Length; ++i)
         {
             cumulativeWeight += weights[i];
             if (randomValue < cumulativeWeight)
@@ -142,11 +133,11 @@ public static class RandomUtil
      */
     public static float FBM(float x, int octaveCount, int seed)
     {
-        System.Random rng = new System.Random(seed);
-        float octaveDelta = 1f / octaveCount;
-        float octaveStart = 0;
-        float startValue = (float)rng.NextDouble();
-        float endValue = (float)rng.NextDouble();
+        var rng = new System.Random(seed);
+        var octaveDelta = 1f / octaveCount;
+        var octaveStart = 0f;
+        var startValue = (float)rng.NextDouble();
+        var endValue = (float)rng.NextDouble();
         while (x > octaveStart + octaveDelta)
         {
             startValue = endValue;
@@ -154,8 +145,8 @@ public static class RandomUtil
             octaveStart += octaveDelta;
         }
 
-        float ratio = (x - octaveStart) / octaveDelta;
-        float y = MathUtil.SmootherStep(startValue, endValue, ratio);
+        var ratio = (x - octaveStart) / octaveDelta;
+        var y = MathUtil.SmootherStep(startValue, endValue, ratio);
         return y;
     }
 }
