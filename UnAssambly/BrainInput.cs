@@ -104,7 +104,7 @@ public class BrainInput : MonoBehaviour, ISubmoduleMount<Brain>
 
             if (!_mainCam.orthographic)
             {
-                Debug.LogAssertion("MainCamera is not orthographic", this);
+                Debug.LogAssertion("MainCamera is not orthographic, mouse look invalid", this);
             }
 
             var mousePositionWorld = (Vector2)_mainCam.ScreenToWorldPoint(mousePosition);

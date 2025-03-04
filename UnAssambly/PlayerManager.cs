@@ -7,7 +7,7 @@ public class PlayerManager : WeaverSingletonBehaviour<PlayerManager>
 {
     [AssetReference] private static readonly PlayerManager SingletonPrefab;
 
-    [SerializeField] private Actor PlayerActorPrefab;
+    // [SerializeField] private Actor PlayerActorPrefab;
 
     private PlayerInput _currentInput;
     private Actor _currentActor;
@@ -61,26 +61,26 @@ public class PlayerManager : WeaverSingletonBehaviour<PlayerManager>
         _currentInput = playerInput;
     }
 
-    public void SpawnPlayerActor(Vector2 spawnPoint)
-    {
-        var actor = PlayerActorPrefab.Spawn(spawnPoint, Quaternion.identity);
-        var entity = actor.gameObject.GetEntity();
-        actor.OnKill += Callback;
-
-        _currentActor = actor;
-        _currentPlayerEntity = entity;
-
-        Debug.Log("Player spawned");
-        GlobalEventBus.Emit<OnPlayerSpawned>();
-        return;
-
-        void Callback()
-        {
-            Debug.Log("Player died2");
-            GlobalEventBus.Emit<OnPlayerDied>();
-            actor.OnKill -= Callback;
-        }
-    }
+    // public void SpawnPlayerActor(Vector2 spawnPoint)
+    // {
+    //     var actor = PlayerActorPrefab.Spawn(spawnPoint, Quaternion.identity);
+    //     var entity = actor.gameObject.GetEntity();
+    //     actor.OnKill += Callback;
+    //
+    //     _currentActor = actor;
+    //     _currentPlayerEntity = entity;
+    //
+    //     Debug.Log("Player spawned");
+    //     GlobalEventBus.Emit<OnPlayerSpawned>();
+    //     return;
+    //
+    //     void Callback()
+    //     {
+    //         Debug.Log("Player died2");
+    //         GlobalEventBus.Emit<OnPlayerDied>();
+    //         actor.OnKill -= Callback;
+    //     }
+    // }
 }
 
 public class OnPlayerSpawned : GameEvent

@@ -1,9 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public static class RaycastUtil
 {
-    private static readonly Dictionary<Collider2D, RaycastHit2D> WorkingMemory = new();
+    private static readonly Dictionary<Collider2D, RaycastHit2D> WorkingMemoryDic = new();
+    private static readonly List<RaycastHit2D> WorkingMemoryList = new();
 
     /**
      * used in bullets with width
@@ -39,7 +41,7 @@ public static class RaycastUtil
         var normal = Vector2.Perpendicular(direction).normalized;
 
         // group by collider
-        WorkingMemory.Clear();
+        WorkingMemoryDic.Clear();
         for (var i = 0; i < rayCount; i++)
         {
             var rayOrigin = origin + normal * (spacing * i - halfWidth);
@@ -47,23 +49,23 @@ public static class RaycastUtil
             foreach (var hit in results)
             {
                 var collider = hit.collider;
-                if (WorkingMemory.TryGetValue(collider, out var previousHit))
+                if (WorkingMemoryDic.TryGetValue(collider, out var previousHit))
                 {
                     if (previousHit.distance > hit.distance)
                     {
-                        WorkingMemory[collider] = hit;
+                        WorkingMemoryDic[collider] = hit;
                     }
                 }
                 else
                 {
-                    WorkingMemory[collider] = hit;
+                    WorkingMemoryDic[collider] = hit;
                 }
             }
         }
 
         // collect results
         results.Clear();
-        results.AddRange(WorkingMemory.Values);
+        results.AddRange(WorkingMemoryDic.Values);
         return results.Count;
     }
 
@@ -76,54 +78,70 @@ public static class RaycastUtil
         float castWidth,
         Vector2 direction,
         float distance,
-        LayerMask mask
+        LayerMask mask,
+        Func<RaycastHit2D, bool> criteria = null
     )
     {
+        if (rayCount < 1)
+        {
+            Debug.LogWarning("raycast count less than 1, it hit nothing");
+            return default;
+        }
+
         if (Mathf.Approximately(castWidth, 0))
         {
             rayCount = 1;
         }
 
-        if (rayCount < 1)
-        {
-            rayCount = 1;
-        }
-
-        if (rayCount == 1)
-        {
-            return Physics2D.Raycast(origin, direction, distance, mask);
-        }
-
         var halfWidth = castWidth / 2;
-        var spacing = castWidth / (rayCount - 1);
+        var spacing = rayCount == 1 ? 0 : castWidth / (rayCount - 1);
         var normal = Vector2.Perpendicular(direction).normalized;
         RaycastHit2D result = default;
         for (var i = 0; i < rayCount; i++)
         {
-            var rayOrigin = origin + normal * (spacing * i - halfWidth);
-            var hit = Physics2D.Raycast(rayOrigin, direction, distance, mask);
-
-#if UNITY_EDITOR && DEBUG_DRAW
-            Color debugColor = hit ? Color.red : Color.green;
-            float debugDistance = hit ? hit.distance : distance;
-            Vector2 debugVector = direction.normalized * debugDistance;
-            // DebugUtil.DrawCross(rayOrigin, Color.blue);
-            Debug.DrawLine(rayOrigin, rayOrigin + debugVector, debugColor);
-#endif
-
-            if (!hit)
+            var offset = rayCount == 1 ? Vector2.zero : normal * (spacing * i - halfWidth);
+            var rayOrigin = origin + offset;
+            if (criteria != null)
             {
-                continue;
+                // find all and use custom criteria
+                var filter = new ContactFilter2D
+                {
+                    useLayerMask = true,
+                    layerMask = mask,
+                };
+                Physics2D.Raycast(rayOrigin, direction, filter, WorkingMemoryList, distance);
+                foreach (var hit in WorkingMemoryList)
+                {
+                    if (!criteria.Invoke(hit))
+                    {
+                        continue;
+                    }
+
+                    if (!result || result.distance > hit.distance)
+                    {
+                        result = hit;
+                    }
+                }
             }
-
-            if (!result || result.distance > hit.distance)
+            else
             {
-                result = hit;
+                // try find nearest one
+                var hit = Physics2D.Raycast(rayOrigin, direction, distance, mask);
+                if (!hit)
+                {
+                    continue;
+                }
+
+                if (!result || result.distance > hit.distance)
+                {
+                    result = hit;
+                }
             }
         }
 
         if (result)
         {
+            // adjust distance to be the projection along the ray direction
             result.distance = Vector2.Dot(result.point - origin, direction);
         }
 
@@ -138,18 +156,20 @@ public static class RaycastUtil
         float shellThickness,
         Vector2 direction, // usually up or right
         float distance,
-        LayerMask mask
+        LayerMask mask,
+        Func<RaycastHit2D, bool> filter = null
     )
     {
         var actualWidth = castWidth - 2 * shellThickness;
         var actualOrigin = origin + direction.normalized * (extent - shellThickness);
         var actualDistance = distance + shellThickness;
-        var hit = ParallelRaycast(actualOrigin, rayCount, actualWidth, direction, actualDistance, mask);
+        var hit = ParallelRaycast(actualOrigin, rayCount, actualWidth, direction, actualDistance, mask, filter);
         hit.distance -= shellThickness;
         return hit;
     }
 
-    public static void DrawGizmosParallelRays(Vector3 center, int count, float width, Vector3 direction) // direction contains both direction and length
+    public static void
+        DrawGizmosParallelRays(Vector3 center, int count, float width, Vector3 direction) // direction contains both direction and length
     {
         if (count < 1)
         {

@@ -126,8 +126,21 @@ public class ActorPlatformerMove : MonoBehaviour, IEntityAttach
             ShellThickness,
             Vector2.up * Mathf.Sign(deltaY),
             Mathf.Abs(deltaY),
-            layers
+            layers,
+            Filter
         );
+    }
+
+    private bool Filter(RaycastHit2D hit)
+    {
+        var selfTrans = _actor.transform;
+        var hitTrans = hit.collider.transform;
+        if (hitTrans.IsChildOf(selfTrans))
+        {
+            return false;
+        }
+
+        return true;
     }
 
     [Button]
