@@ -1,0 +1,17 @@
+{
+    "name": "common.thirdparty.leanpool",
+    "rootNamespace": "",
+    "references": [
+        "GUID:174bc9f391f1b7f4292b3824c5019a21",
+        "GUID:d893582e9e4e4b308ad67707bd22105f"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

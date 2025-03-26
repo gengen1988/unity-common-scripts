@@ -1,0 +1,20 @@
+{
+    "name": "common.modifier",
+    "rootNamespace": "",
+    "references": [
+        "GUID:a7397cecbf8cd414c9f5add2cde8c5f9",
+        "GUID:d893582e9e4e4b308ad67707bd22105f",
+        "GUID:dac1f5daea26f8f4e921b492048d3add",
+        "GUID:f216715bdf01528409aed91a1b5ccb21",
+        "GUID:0c24d7285bf9ad84a91b87a6c377df68"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

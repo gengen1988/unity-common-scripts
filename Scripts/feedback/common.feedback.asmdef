@@ -1,0 +1,17 @@
+{
+    "name": "common.feedback",
+    "rootNamespace": "",
+    "references": [
+        "GUID:d893582e9e4e4b308ad67707bd22105f",
+        "GUID:dac1f5daea26f8f4e921b492048d3add"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
